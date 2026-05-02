@@ -18,12 +18,6 @@ if (!supabaseUrl || !supabaseServiceRoleKey) {
 const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 const stripeWebhookSecret = webhookSecret;
 
-export const config = {
-  api: {
-    bodyParser: false
-  }
-};
-
 export async function POST(request: Request) {
   const rawBody = await request.text();
   const signature = headers().get("stripe-signature");

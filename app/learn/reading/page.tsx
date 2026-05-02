@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
-import type { Hint, Proficiency, UserLanguage } from "@/types";
+import type { Hint, KnownLanguage, LearningLanguage, Proficiency } from "@/types";
 
 interface PassageToken {
   id: string;
@@ -70,6 +70,7 @@ export default function ReadingPage() {
   const [knownWordIds, setKnownWordIds] = useState<Set<string>>(new Set());
   const [knownLanguages, setKnownLanguages] = useState<KnownLanguageInput[]>([]);
   const [targetLanguage, setTargetLanguage] = useState("es");
+  const [hasLearningLanguage, setHasLearningLanguage] = useState(true);
   const [activeWord, setActiveWord] = useState<PassageToken | null>(null);
   const [hintLoading, setHintLoading] = useState(false);
   const [hint, setHint] = useState<Hint | null>(null);
@@ -95,34 +96,44 @@ export default function ReadingPage() {
         return;
       }
 
-      const { data: languageRows, error: languageError } = await supabase
-        .from("user_languages")
-        .select("*")
-        .eq("user_id", user.id);
+      const [{ data: knownRows, error: knownError }, { data: learningRows, error: learningError }] =
+        await Promise.all([
+          supabase.from("known_languages").select("*").eq("user_id", user.id),
+          supabase
+            .from("learning_languages")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: true })
+        ]);
 
-      if (languageError) {
-        setError(languageError.message);
+      if (knownError) {
+        setError(knownError.message);
+        setLoading(false);
+        return;
+      }
+      if (learningError) {
+        setError(learningError.message);
         setLoading(false);
         return;
       }
 
-      const typedLanguages = (languageRows ?? []) as UserLanguage[];
-      const target = typedLanguages.find((row) => row.is_target);
+      const knownTyped = (knownRows ?? []) as KnownLanguage[];
+      const learningTyped = (learningRows ?? []) as LearningLanguage[];
+      setHasLearningLanguage(learningTyped.length > 0);
+      const target = learningTyped[0] ?? null;
       const selectedTargetLanguage = target?.language_code ?? "es";
       setTargetLanguage(selectedTargetLanguage);
 
-      const knownLanguageRows = typedLanguages
-        .filter((row) => !row.is_target)
-        .map((row) => ({
-          language: row.language_name,
-          languageCode: row.language_code,
-          proficiency: row.proficiency
-        }));
+      const knownLanguageRows = knownTyped.map((row) => ({
+        language: row.language_name,
+        languageCode: row.language_code,
+        proficiency: row.proficiency
+      }));
 
       setKnownLanguages(
         knownLanguageRows.length
           ? knownLanguageRows
-          : [{ language: "English", languageCode: "en", proficiency: "fluent" }]
+          : [{ language: "English", languageCode: "en", proficiency: "C2" }]
       );
 
       const { data: knownCards, error: knownCardsError } = await supabase
@@ -358,11 +369,21 @@ export default function ReadingPage() {
   };
 
   if (loading) {
-    return <main className="p-6 text-sm text-slate-600">Loading reading module...</main>;
+    return (
+      <>
+        <main className="p-6 pb-28 text-sm text-slate-600">Loading reading module...</main>
+        <BottomNav activeTab="learn" />
+      </>
+    );
   }
 
   if (error) {
-    return <main className="p-6 text-sm text-red-600">{error}</main>;
+    return (
+      <>
+        <main className="p-6 pb-28 text-sm text-red-600">{error}</main>
+        <BottomNav activeTab="learn" hasLearningLanguage={hasLearningLanguage} />
+      </>
+    );
   }
 
   return (
@@ -575,7 +596,7 @@ export default function ReadingPage() {
       </div>
 
       <p className="sr-only">{passageText}</p>
-      <BottomNav activeTab="learn" />
+      <BottomNav activeTab="learn" hasLearningLanguage={hasLearningLanguage} />
     </main>
   );
 }

@@ -1,17 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import type { Proficiency, UserLanguage } from "@/types";
+import type { KnownLanguage, LearningLanguage } from "@/types";
 
 interface ProfileScreenClientProps {
   userId: string;
   initialName: string;
   email: string;
-  languages: UserLanguage[];
+  knownLanguages: KnownLanguage[];
+  learningLanguages: LearningLanguage[];
+  hasLearningLanguage: boolean;
   wordsLearned: number;
   streak: number;
 }
@@ -23,17 +26,34 @@ function getInitials(name: string) {
   return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
 }
 
-function getProficiencyBadgeClass(proficiency: Proficiency) {
-  if (proficiency === "fluent") return "bg-emerald-50 text-emerald-700";
-  if (proficiency === "conversational") return "bg-amber-50 text-amber-700";
-  return "bg-slate-100 text-slate-600";
+function getProficiencyBadgeClass(proficiency: string): string {
+  const level =
+    proficiency === "basic"
+      ? "A2"
+      : proficiency === "conversational"
+        ? "B1"
+        : proficiency === "fluent"
+          ? "C1"
+          : proficiency;
+  if (level === "A1" || level === "A2") {
+    return "border border-blue-200 bg-blue-50 text-blue-600";
+  }
+  if (level === "B1" || level === "B2") {
+    return "border border-amber-200 bg-amber-50 text-amber-600";
+  }
+  if (level === "C1" || level === "C2") {
+    return "border border-green-200 bg-green-50 text-green-700";
+  }
+  return "border border-slate-200 bg-slate-100 text-slate-600";
 }
 
 export default function ProfileScreenClient({
   userId,
   initialName,
   email,
-  languages,
+  knownLanguages,
+  learningLanguages,
+  hasLearningLanguage,
   wordsLearned,
   streak
 }: ProfileScreenClientProps) {
@@ -46,14 +66,6 @@ export default function ProfileScreenClient({
   const [savedName, setSavedName] = useState(false);
   const [error, setError] = useState("");
 
-  const targetLanguage = useMemo(
-    () => languages.find((language) => language.is_target) ?? null,
-    [languages]
-  );
-  const knownLanguages = useMemo(
-    () => languages.filter((language) => !language.is_target),
-    [languages]
-  );
   const languageFlagsByCode = useMemo(() => {
     return new Map([
       ["en", "🇬🇧"],
@@ -77,7 +89,8 @@ export default function ProfileScreenClient({
       ["ko", "🇰🇷"],
       ["zh", "🇨🇳"],
       ["vi", "🇻🇳"],
-      ["th", "🇹🇭"]
+      ["th", "🇹🇭"],
+      ["ca", "🏴"]
     ]);
   }, []);
 
@@ -185,31 +198,54 @@ export default function ProfileScreenClient({
       </section>
 
       <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
-        <p className="mb-3 text-xs uppercase tracking-widest text-slate-500">Learning</p>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">
-              {targetLanguage
-                ? languageFlagsByCode.get(targetLanguage.language_code) ?? "🌍"
-                : "🌍"}
-            </span>
-            <span className="font-medium text-slate-900">
-              {targetLanguage?.language_name ?? "No target language set"}
-            </span>
-          </div>
-          <button
-            type="button"
-            onClick={() => router.push("/onboarding")}
-            className="text-sm text-[#2D6A4F]"
-          >
-            Change
-          </button>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-xs uppercase tracking-widest text-slate-500">
+            Languages I&apos;m learning
+          </p>
+          <Link href="/languages/add" className="shrink-0 text-sm text-[#2D6A4F]">
+            Edit
+          </Link>
         </div>
 
-        <div className="my-3 h-px bg-slate-100" />
+        {learningLanguages.length === 0 ? (
+          <div>
+            <p className="text-sm text-slate-500">No languages yet</p>
+            <Link href="/languages/add" className="mt-2 inline-block text-sm font-medium text-[#2D6A4F]">
+              Add a language
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {learningLanguages.map((language) => (
+              <div key={language.id} className="flex items-center justify-between gap-2">
+                <div className="flex min-w-0 flex-wrap items-center gap-2">
+                  <span className="text-xl">
+                    {languageFlagsByCode.get(language.language_code) ?? "🌍"}
+                  </span>
+                  <span className="font-medium text-slate-900">{language.language_name}</span>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getProficiencyBadgeClass(
+                    language.cefr_level
+                  )}`}
+                >
+                  {language.cefr_level}
+                </span>
+              </div>
+            ))}
+            <Link
+              href="/languages/add"
+              className="mt-3 inline-block text-sm font-medium text-[#2D6A4F]"
+            >
+              Add a language
+            </Link>
+          </div>
+        )}
+      </section>
 
+      <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs uppercase tracking-widest text-slate-500">I speak</p>
+          <p className="text-xs uppercase tracking-widest text-slate-500">Languages I speak</p>
           <button
             type="button"
             onClick={() => router.push("/onboarding")}
@@ -230,7 +266,7 @@ export default function ProfileScreenClient({
                   <span className="text-sm text-slate-800">{language.language_name}</span>
                 </div>
                 <span
-                  className={`rounded-full px-3 py-1 text-xs capitalize ${getProficiencyBadgeClass(
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getProficiencyBadgeClass(
                     language.proficiency
                   )}`}
                 >
@@ -265,7 +301,7 @@ export default function ProfileScreenClient({
         Sign out
       </Button>
 
-      <BottomNav activeTab="profile" />
+      <BottomNav activeTab="profile" hasLearningLanguage={hasLearningLanguage} />
     </main>
   );
 }

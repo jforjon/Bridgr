@@ -29,16 +29,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { data: userLanguages, error: userLanguagesError } = await supabase
-      .from("user_languages")
-      .select("language_name, language_code, proficiency, is_target")
+    const { data: knownRows, error: knownLanguagesError } = await supabase
+      .from("known_languages")
+      .select("language_name, language_code, proficiency, is_reference_only")
       .eq("user_id", user.id);
-    if (userLanguagesError) {
-      return NextResponse.json({ error: userLanguagesError.message }, { status: 500 });
+    if (knownLanguagesError) {
+      return NextResponse.json({ error: knownLanguagesError.message }, { status: 500 });
     }
 
-    const knownLanguageObjects = (userLanguages ?? [])
-      .filter((language) => !language.is_target)
+    const knownLanguageObjects = (knownRows ?? [])
+      .filter((row) => !(row as { is_reference_only?: boolean }).is_reference_only)
       .map((language) => ({
         language: language.language_name,
         languageCode: language.language_code,

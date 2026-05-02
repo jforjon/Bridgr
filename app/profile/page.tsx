@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { UserLanguage } from "@/types";
+import type { KnownLanguage, LearningLanguage } from "@/types";
 import ProfileScreenClient from "./ProfileScreenClient";
 
 export default async function ProfilePage() {
@@ -13,18 +13,29 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const [{ data: profileData }, { data: languageData }, { count: flashcardCount }, { data: progressRows }] =
-    await Promise.all([
-      supabase.from("profiles").select("name,email").eq("id", user.id).maybeSingle(),
-      supabase.from("user_languages").select("*").eq("user_id", user.id),
-      supabase
-        .from("flashcards")
-        .select("*", { head: true, count: "exact" })
-        .eq("user_id", user.id),
-      supabase.from("lesson_progress").select("streak_days").eq("user_id", user.id)
-    ]);
+  const [
+    { data: profileData },
+    { data: knownLanguageData },
+    { data: learningLanguageData },
+    { count: flashcardCount },
+    { data: progressRows }
+  ] = await Promise.all([
+    supabase.from("profiles").select("name,email").eq("id", user.id).maybeSingle(),
+    supabase.from("known_languages").select("*").eq("user_id", user.id),
+    supabase
+      .from("learning_languages")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("flashcards")
+      .select("*", { head: true, count: "exact" })
+      .eq("user_id", user.id),
+    supabase.from("lesson_progress").select("streak_days").eq("user_id", user.id)
+  ]);
 
-  const languages = (languageData ?? []) as UserLanguage[];
+  const knownLanguages = (knownLanguageData ?? []) as KnownLanguage[];
+  const learningLanguages = (learningLanguageData ?? []) as LearningLanguage[];
   const streak = (progressRows ?? []).reduce(
     (max, row) => Math.max(max, row.streak_days ?? 0),
     0
@@ -35,7 +46,9 @@ export default async function ProfilePage() {
       userId={user.id}
       initialName={(profileData?.name ?? "").trim()}
       email={profileData?.email ?? ""}
-      languages={languages}
+      knownLanguages={knownLanguages}
+      learningLanguages={learningLanguages}
+      hasLearningLanguage={learningLanguages.length > 0}
       wordsLearned={flashcardCount ?? 0}
       streak={streak}
     />

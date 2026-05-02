@@ -34,23 +34,25 @@ export default function LoginScreen() {
       data: { user }
     } = await supabase.auth.getUser();
     if (!user) {
+      setLoading(false);
       setError("Could not load your account.");
       return;
     }
 
-    const { data: languageRows, error: languageError } = await supabase
-      .from("user_languages")
+    const { data: knownRows, error: knownError } = await supabase
+      .from("known_languages")
       .select("id")
       .eq("user_id", user.id)
       .limit(1);
 
-    if (languageError) {
+    if (knownError) {
       setLoading(false);
-      setError(languageError.message);
+      setError(knownError.message);
       return;
     }
 
-    if ((languageRows ?? []).length === 0) {
+    const onboardingComplete = (knownRows ?? []).length > 0;
+    if (!onboardingComplete) {
       setLoading(false);
       router.push("/onboarding");
       return;
@@ -109,7 +111,7 @@ export default function LoginScreen() {
           <Button
             type="submit"
             disabled={loading}
-            className="w-full mt-6 rounded-2xl py-4 h-auto text-base font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+            className="mt-6 h-auto min-h-0 border-0 w-full bg-[#2D6A4F] text-white rounded-2xl py-4 font-semibold text-base hover:bg-[#245c42] transition-colors"
           >
             {loading ? "Logging in..." : "Log in"}
           </Button>

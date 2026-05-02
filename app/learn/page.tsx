@@ -2,14 +2,16 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
-import type { Hint, UserLanguage, Word } from "@/types";
+import type { Hint, KnownLanguage, LearningLanguage, Word } from "@/types";
 
 export default function LearnPage() {
   const supabase = createClient();
   const [words, setWords] = useState<Word[]>([]);
   const [knownLanguages, setKnownLanguages] = useState<string[]>([]);
   const [targetLanguage, setTargetLanguage] = useState<string>("es");
+  const [hasLearningLanguage, setHasLearningLanguage] = useState(true);
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [hintLoading, setHintLoading] = useState(false);
@@ -30,15 +32,20 @@ export default function LearnPage() {
         return;
       }
 
-      const { data: languageRows } = await supabase
-        .from("user_languages")
-        .select("*")
-        .eq("user_id", user.id);
+      const [{ data: knownRows }, { data: learningRows }] = await Promise.all([
+        supabase.from("known_languages").select("*").eq("user_id", user.id),
+        supabase
+          .from("learning_languages")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true })
+      ]);
 
-      const typed = (languageRows ?? []) as UserLanguage[];
-      const target = typed.find((row) => row.is_target);
-      const languages = typed.filter((row) => !row.is_target);
-      const unique = languages.filter(
+      const knownTyped = (knownRows ?? []) as KnownLanguage[];
+      const learningTyped = (learningRows ?? []) as LearningLanguage[];
+      setHasLearningLanguage(learningTyped.length > 0);
+      const target = learningTyped[0] ?? null;
+      const unique = knownTyped.filter(
         (l, i, arr) => arr.findIndex((x) => x.language_code === l.language_code) === i
       );
       const known = unique.map((row) => row.language_code);
@@ -113,21 +120,34 @@ export default function LearnPage() {
   };
 
   if (loading) {
-    return <main className="p-6 text-sm text-slate-600">Loading words...</main>;
+    return (
+      <>
+        <main className="p-6 pb-28 text-sm text-slate-600">Loading words...</main>
+        <BottomNav activeTab="learn" />
+      </>
+    );
   }
 
   if (error) {
-    return <main className="p-6 text-sm text-red-600">{error}</main>;
+    return (
+      <>
+        <main className="p-6 pb-28 text-sm text-red-600">{error}</main>
+        <BottomNav activeTab="learn" hasLearningLanguage={hasLearningLanguage} />
+      </>
+    );
   }
 
   if (sessionComplete || !currentWord) {
     return (
-      <main className="p-6">
-        <h1 className="mt-8 text-2xl font-bold text-primary">Session complete</h1>
-        <p className="mt-2 text-sm text-slate-600">
-          Nice work. You reviewed all words in this learning session.
-        </p>
-      </main>
+      <>
+        <main className="p-6 pb-28">
+          <h1 className="mt-8 text-2xl font-bold text-primary">Session complete</h1>
+          <p className="mt-2 text-sm text-slate-600">
+            Nice work. You reviewed all words in this learning session.
+          </p>
+        </main>
+        <BottomNav activeTab="learn" hasLearningLanguage={hasLearningLanguage} />
+      </>
     );
   }
 
@@ -204,7 +224,7 @@ export default function LearnPage() {
         ) : null}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-4 z-40">
+      <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-slate-100 bg-white px-4 py-4">
         <div className="max-w-2xl mx-auto grid grid-cols-2 gap-3">
           <button
             type="button"
@@ -223,6 +243,8 @@ export default function LearnPage() {
           </button>
         </div>
       </div>
+
+      <BottomNav activeTab="learn" hasLearningLanguage={hasLearningLanguage} />
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
 import { getDueCards } from "@/lib/srs";
 import type { Flashcard } from "@/types";
@@ -20,6 +21,7 @@ export default function ReviewPage() {
   const [revealed, setRevealed] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [hasLearningLanguage, setHasLearningLanguage] = useState(true);
 
   useEffect(() => {
     const load = async () => {
@@ -32,6 +34,15 @@ export default function ReviewPage() {
         setError("Please log in first.");
         setLoading(false);
         return;
+      }
+
+      const { count: learningCount, error: learningCountError } = await supabase
+        .from("learning_languages")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (!learningCountError) {
+        setHasLearningLanguage((learningCount ?? 0) > 0);
       }
 
       try {
@@ -70,27 +81,40 @@ export default function ReviewPage() {
   };
 
   if (loading) {
-    return <main className="p-6 text-sm text-slate-600">Loading due cards...</main>;
+    return (
+      <>
+        <main className="p-6 pb-28 text-sm text-slate-600">Loading due cards...</main>
+        <BottomNav activeTab="review" />
+      </>
+    );
   }
 
   if (error) {
-    return <main className="p-6 text-sm text-red-600">{error}</main>;
+    return (
+      <>
+        <main className="p-6 pb-28 text-sm text-red-600">{error}</main>
+        <BottomNav activeTab="review" hasLearningLanguage={hasLearningLanguage} />
+      </>
+    );
   }
 
   if (!cards.length || !currentCard) {
     return (
-      <main className="min-h-screen grid place-items-center p-6 text-center">
-        <div>
-          <h1 className="font-serif text-3xl font-normal text-slate-900">All caught up</h1>
-          <p className="mt-2 text-sm text-slate-500">Come back tomorrow for your next review</p>
-          <Link
-            href="/dashboard"
-            className="mt-6 inline-flex rounded-2xl bg-[#2D6A4F] px-6 py-3 text-sm font-semibold text-white"
-          >
-            Back to dashboard
-          </Link>
-        </div>
-      </main>
+      <>
+        <main className="min-h-screen grid place-items-center p-6 pb-28 text-center">
+          <div>
+            <h1 className="font-serif text-3xl font-normal text-slate-900">All caught up</h1>
+            <p className="mt-2 text-sm text-slate-500">Come back tomorrow for your next review</p>
+            <Link
+              href="/dashboard"
+              className="mt-6 inline-flex rounded-2xl bg-[#2D6A4F] px-6 py-3 text-sm font-semibold text-white"
+            >
+              Back to dashboard
+            </Link>
+          </div>
+        </main>
+        <BottomNav activeTab="review" hasLearningLanguage={hasLearningLanguage} />
+      </>
     );
   }
 
@@ -152,7 +176,7 @@ export default function ReviewPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 px-4 py-4 z-40">
+      <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-slate-100 bg-white px-4 py-4">
         <div className="max-w-2xl mx-auto">
           {!revealed ? (
             <button
@@ -189,6 +213,8 @@ export default function ReviewPage() {
           )}
         </div>
       </div>
+
+      <BottomNav activeTab="review" hasLearningLanguage={hasLearningLanguage} />
     </main>
   );
 }

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/middleware";
 
-const protectedRoutes = ["/learn", "/review", "/profile", "/onboarding"];
+const protectedRoutes = ["/learn", "/review", "/profile", "/onboarding", "/languages", "/placement"];
 const publicRoutes = [
   "/",
   "/login",

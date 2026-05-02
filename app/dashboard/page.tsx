@@ -1,16 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Home, BookOpen, RefreshCw, User } from "lucide-react";
+import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/server";
 import { SUPPORTED_LANGUAGES } from "@/types";
-import type { UserLanguage } from "@/types";
-
-const navItems = [
-  { icon: Home, label: "Home", href: "/dashboard", active: true },
-  { icon: BookOpen, label: "Learn", href: "/learn", active: false },
-  { icon: RefreshCw, label: "Review", href: "/review", active: false },
-  { icon: User, label: "Profile", href: "/profile", active: false }
-];
+import type { KnownLanguage, LearningLanguage } from "@/types";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -35,14 +28,20 @@ export default async function DashboardPage() {
 
   const [
     { data: profileData },
-    { data: languageData },
+    { data: knownLanguageData },
+    { data: learningLanguageData },
     { count: dueCount },
     { count: totalFlashcardsCount },
     { count: todayWordsCount, error: todayWordsError },
     { data: progressRows }
   ] = await Promise.all([
     supabase.from("profiles").select("name").eq("id", user.id).maybeSingle(),
-    supabase.from("user_languages").select("*").eq("user_id", user.id),
+    supabase.from("known_languages").select("*").eq("user_id", user.id),
+    supabase
+      .from("learning_languages")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: true }),
     supabase
       .from("flashcards")
       .select("*", { count: "exact", head: true })
@@ -66,9 +65,9 @@ export default async function DashboardPage() {
   }
 
   const name = (profileData?.name ?? "").trim() || "there";
-  const languages = (languageData ?? []) as UserLanguage[];
-  const targetLanguage = languages.find((language) => language.is_target) ?? null;
-  const knownLanguages = languages.filter((language) => !language.is_target);
+  const knownLanguages = (knownLanguageData ?? []) as KnownLanguage[];
+  const learningRows = (learningLanguageData ?? []) as LearningLanguage[];
+  const targetLanguage = learningRows[0] ?? null;
   const streak = (progressRows ?? []).reduce(
     (max, row) => Math.max(max, row.streak_days ?? 0),
     0
@@ -77,7 +76,12 @@ export default async function DashboardPage() {
   const todayWords = todayWordsError ? 0 : todayWordsCount ?? 0;
   const totalWords = totalFlashcardsCount ?? 0;
   const targetFlag =
-    SUPPORTED_LANGUAGES.find((language) => language.code === targetLanguage?.language_code)?.flag ?? "🌍";
+    targetLanguage != null
+      ? (SUPPORTED_LANGUAGES.find((language) => language.code === targetLanguage.language_code)?.flag ??
+        "🌍")
+      : null;
+
+  const hasLearningLanguage = learningRows.length > 0;
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] relative pb-20">
@@ -112,71 +116,74 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="px-5 mb-6 flex flex-col gap-3">
-        <Link
-          href="/learn"
-          className="w-full bg-[#2D6A4F] text-white rounded-2xl py-4 font-semibold text-base text-center"
-        >
-          Start lesson
-        </Link>
-        <Link
-          href="/review"
-          className="w-full bg-transparent border-2 border-[#2D6A4F] text-[#2D6A4F] rounded-2xl py-4 font-semibold text-base text-center"
-        >
-          Review {dueWords} due words
-        </Link>
-        <Link
-          href="/learn/reading"
-          className="w-full bg-transparent border border-slate-300 text-slate-600 rounded-2xl py-4 font-semibold text-base text-center"
-        >
-          Practice reading
-        </Link>
-      </section>
+      {hasLearningLanguage ? (
+        <section className="px-5 mb-6 flex flex-col gap-3">
+          <Link
+            href="/learn"
+            className="w-full bg-[#2D6A4F] text-white rounded-2xl py-4 font-semibold text-base text-center"
+          >
+            Start lesson
+          </Link>
+          <Link
+            href="/review"
+            className="w-full bg-transparent border-2 border-[#2D6A4F] text-[#2D6A4F] rounded-2xl py-4 font-semibold text-base text-center"
+          >
+            Review {dueWords} due words
+          </Link>
+          <Link
+            href="/learn/reading"
+            className="w-full bg-transparent border border-slate-300 text-slate-600 rounded-2xl py-4 font-semibold text-base text-center"
+          >
+            Practice reading
+          </Link>
+        </section>
+      ) : null}
 
       <section className="px-5 mb-24">
-        <div className="rounded-2xl p-5 bg-white border-0 shadow-sm">
-          <span className="text-[10px] uppercase tracking-widest text-slate-500">LEARNING</span>
-          <h3 className="font-serif text-xl text-[#0F1A14] mt-2">
-            <span className="mr-2">{targetFlag}</span>
-            {targetLanguage?.language_name ?? "No target language set"}
-          </h3>
-          <div className="flex gap-2 mt-3 flex-wrap">
-            {knownLanguages.length > 0 ? (
-              knownLanguages.map((language) => {
-                const flag =
-                  SUPPORTED_LANGUAGES.find((entry) => entry.code === language.language_code)?.flag ?? "🌍";
-                return (
-                  <span
-                    key={language.id}
-                    className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-sm"
-                  >
-                    {flag} {language.language_name}
-                  </span>
-                );
-              })
-            ) : (
-              <span className="text-sm text-slate-500">No known languages set</span>
-            )}
+        {targetLanguage ? (
+          <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
+            <span className="text-[10px] uppercase tracking-widest text-slate-500">LEARNING</span>
+            <h3 className="mt-2 font-serif text-xl text-[#0F1A14]">
+              <span className="mr-2">{targetFlag}</span>
+              {targetLanguage.language_name}
+            </h3>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {knownLanguages.length > 0 ? (
+                knownLanguages.map((language) => {
+                  const flag =
+                    SUPPORTED_LANGUAGES.find((entry) => entry.code === language.language_code)?.flag ??
+                    "🌍";
+                  return (
+                    <span
+                      key={language.id}
+                      className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
+                    >
+                      {flag} {language.language_name}
+                    </span>
+                  );
+                })
+              ) : (
+                <span className="text-sm text-slate-500">No known languages set</span>
+              )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
+            <p className="mb-2 font-serif text-xl text-[#0F1A14]">What do you want to learn?</p>
+            <p className="mb-4 text-sm text-slate-500">
+              Pick a language and we&apos;ll build your personal course
+            </p>
+            <Link
+              href="/languages/add"
+              className="inline-block rounded-2xl bg-[#2D6A4F] px-6 py-3 font-medium text-white"
+            >
+              Choose a language
+            </Link>
+          </div>
+        )}
       </section>
 
-      <nav className="fixed inset-x-0 bottom-0 w-full bg-white border-t border-slate-100 py-3">
-        <div className="flex justify-around items-center">
-          {navItems.map((item) => (
-            <Link
-              key={item.label}
-              href={item.href}
-              className={`flex flex-col items-center gap-1 ${
-                item.active ? "text-[#2D6A4F]" : "text-slate-400"
-              }`}
-            >
-              <item.icon className="w-5 h-5" />
-              <span className="text-xs">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      <BottomNav activeTab="home" hasLearningLanguage={hasLearningLanguage} />
     </div>
   );
 }

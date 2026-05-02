@@ -5,7 +5,11 @@ export type HintType =
   | "false_friend"
   | "structural_parallel";
 
-export type Proficiency = "basic" | "conversational" | "fluent";
+export type CEFRLevel = "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
+
+export const CEFR_LEVELS: readonly CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1", "C2"];
+
+export type Proficiency = CEFRLevel;
 
 export interface Profile {
   id: string;
@@ -16,13 +20,103 @@ export interface Profile {
   created_at: string;
 }
 
-export interface UserLanguage {
+export interface KnownLanguage {
   id: string;
   user_id: string;
   language_code: string;
   language_name: string;
   proficiency: Proficiency;
-  is_target: boolean;
+  /** From onboarding "other languages"; coarse B1, reference-oriented */
+  is_reference_only?: boolean;
+  created_at: string;
+}
+
+export interface LearningLanguage {
+  id: string;
+  user_id: string;
+  language_code: string;
+  language_name: string;
+  cefr_level: CEFRLevel;
+  placement_completed: boolean;
+  last_accessed_at: string | null;
+  created_at: string;
+}
+
+export interface Placement {
+  id: string;
+  user_id: string;
+  language_code: string;
+  cefr_level: CEFRLevel;
+  score: number;
+  total_questions: number;
+  weak_areas: string[];
+  skipped: boolean;
+  completed_at: string;
+}
+
+export interface CurriculumTopic {
+  id: string;
+  language_code: string;
+  cefr_level: CEFRLevel;
+  topic_key: string;
+  topic_name: string;
+  topic_type: "vocabulary" | "grammar" | "reading" | "culture";
+  description: string | null;
+  source: string | null;
+  order_index: number;
+}
+
+export interface CurriculumRule {
+  id: string;
+  topic_id: string;
+  language_code: string;
+  rule_title: string;
+  rule_explanation: string;
+  examples: { sentence: string; translation: string }[];
+  source: string | null;
+}
+
+export interface CurriculumVocabulary {
+  id: string;
+  language_code: string;
+  cefr_level: CEFRLevel;
+  word: string;
+  translation_en: string;
+  part_of_speech: string | null;
+  frequency_rank: number | null;
+  topic_key: string | null;
+  source: string | null;
+}
+
+export interface Course {
+  id: string;
+  user_id: string;
+  language_code: string;
+  cefr_level: CEFRLevel;
+  generated_at: string;
+}
+
+export interface Unit {
+  id: string;
+  course_id: string;
+  topic_key: string;
+  title: string;
+  description: string | null;
+  cefr_level: CEFRLevel;
+  order_index: number;
+  status: "locked" | "available" | "completed";
+  unlocked_at: string | null;
+}
+
+export interface Lesson {
+  id: string;
+  unit_id: string;
+  type: "vocabulary" | "grammar" | "reading" | "review";
+  title: string;
+  order_index: number;
+  status: "locked" | "available" | "completed";
+  content: any;
+  completed_at: string | null;
 }
 
 export interface Word {
@@ -44,6 +138,10 @@ export interface Flashcard {
   repetitions: number;
   next_review_date: string;
   last_quality: number | null;
+  lesson_id?: string | null;
+  language_code?: string | null;
+  last_typed_answer?: string | null;
+  typing_accuracy?: number | null;
   words?: Word;
 }
 

@@ -37,7 +37,7 @@ Do NOT reference English or any other language not in this list unless English i
 
 Respond ONLY with valid JSON, no markdown, no backticks:
 {
-  "hint_text": "2 sentences max, conversational, e.g. Like esperar in Spanish...",
+  "hint_text": "2 sentences max, friendly and plain-language, e.g. Like esperar in Spanish...",
   "hint_type": "cognate|shared_root|grammar_analogy|false_friend|structural_parallel",
   "source_language_code": "ISO code",
   "confidence": 0.0 to 1.0

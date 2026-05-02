@@ -13,7 +13,7 @@ create table if not exists public.user_languages (
   user_id uuid not null references public.profiles(id) on delete cascade,
   language_code text not null,
   language_name text not null,
-  proficiency text not null check (proficiency in ('basic', 'conversational', 'fluent')),
+  proficiency text not null check (proficiency in ('A1', 'A2', 'B1', 'B2', 'C1', 'C2')),
   is_target boolean not null default false
 );
 
