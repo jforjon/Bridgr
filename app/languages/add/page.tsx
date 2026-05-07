@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
+import BridgrPageLoading from "@/components/BridgrPageLoading";
 import { createClient } from "@/lib/supabase/client";
 import type { LearningLanguage } from "@/types";
 
@@ -72,9 +73,10 @@ export default function AddLearningLanguagePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8FAF9]">
-        <main className="p-6 text-sm text-slate-600">Loading languages...</main>
-      </div>
+      <BridgrPageLoading
+        title="Loading languages…"
+        subtitle="Checking what you’re already learning"
+      />
     );
   }
 

@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import BridgrPageLoading from "@/components/BridgrPageLoading";
 import { createClient } from "@/lib/supabase/client";
 import { SUPPORTED_LANGUAGES } from "@/types";
 
 const CEFR_SCALE: Array<"A1" | "A2" | "B1" | "B2" | "C1" | "C2"> = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
-type Stage = 1 | 2 | 3 | 4;
+type Stage = 1 | 2 | 3 | 4 | "generating";
 
 interface PlacementQuestionClient {
   id: string;
@@ -59,6 +60,10 @@ export default function PlacementTestPage() {
   const [selfReportLevel, setSelfReportLevel] = useState<(typeof CEFR_SCALE)[number] | null>(null);
   const [selfReportSubmitting, setSelfReportSubmitting] = useState(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
+  const [knownLanguages, setKnownLanguages] = useState<
+    Array<{ language_name: string; language_code: string }>
+  >([]);
+  const [rotatingIndex, setRotatingIndex] = useState(0);
 
   const [testSessionId, setTestSessionId] = useState<string | null>(null);
   const [questions, setQuestions] = useState<PlacementQuestionClient[]>([]);
@@ -67,6 +72,24 @@ export default function PlacementTestPage() {
   const [fillDraft, setFillDraft] = useState("");
 
   const [submitResult, setSubmitResult] = useState<SubmitResult | null>(null);
+
+  const bridgesPhrase = useMemo(() => {
+    const names = knownLanguages.map((k) => k.language_name?.trim()).filter(Boolean) as string[];
+    if (names.length === 0) return "languages you already speak";
+    if (names.length === 1) return names[0];
+    if (names.length === 2) return `${names[0]} and ${names[1]}`;
+    return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
+  }, [knownLanguages]);
+
+  const rotatingMessages = useMemo(
+    () => [
+      "Analysing your language background...",
+      `Finding bridges from ${bridgesPhrase}...`,
+      "Ordering topics for your profile...",
+      "Almost ready..."
+    ],
+    [bridgesPhrase]
+  );
 
   useEffect(() => {
     setFillDraft("");
@@ -77,6 +100,32 @@ export default function PlacementTestPage() {
       setExitConfirmOpen(false);
     }
   }, [stage]);
+
+  useEffect(() => {
+    if (!languageCode) return;
+    const loadKnown = async () => {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("known_languages")
+        .select("language_name, language_code")
+        .eq("user_id", user.id);
+      setKnownLanguages((data ?? []) as Array<{ language_name: string; language_code: string }>);
+    };
+    void loadKnown();
+  }, [languageCode, supabase]);
+
+  useEffect(() => {
+    if (stage !== "generating") return;
+    setRotatingIndex(0);
+    const n = rotatingMessages.length;
+    const id = window.setInterval(() => {
+      setRotatingIndex((i) => (i + 1) % n);
+    }, 3000);
+    return () => window.clearInterval(id);
+  }, [stage, rotatingMessages.length]);
 
   const currentQuestion = questions[currentIndex] ?? null;
   const totalQuestions = questions.length;
@@ -158,49 +207,41 @@ export default function PlacementTestPage() {
 
   const skipAsBeginner = useCallback(async () => {
     setError("");
-    const {
-      data: { user }
-    } = await supabase.auth.getUser();
-    if (!user) {
-      router.push(`/login?redirectedFrom=/placement/${languageCode}`);
-      return;
+    try {
+      const res = await fetch("/api/placement/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          skipped: true,
+          cefr_level: "A1",
+          language_code: languageCode,
+          language_name: languageName
+        })
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        error?: string;
+        skipped?: boolean;
+        cefr_level?: string;
+      };
+      console.log("skip response:", res.status, data);
+      if (!res.ok) {
+        if (res.status === 401) {
+          router.push(`/login?redirectedFrom=/placement/${encodeURIComponent(languageCode)}`);
+          return;
+        }
+        setStage(1);
+        setError(data.error ?? "Could not save your choice.");
+        return;
+      }
+      console.log("navigating to:", `/learn/${encodeURIComponent(languageCode)}`);
+      router.push(`/learn/${encodeURIComponent(languageCode)}`);
+      console.log("router.push called");
+    } catch {
+      setStage(1);
+      setError("Network error while saving.");
     }
-
-    const { error: learnErr } = await supabase.from("learning_languages").upsert(
-      {
-        user_id: user.id,
-        language_code: languageCode,
-        language_name: languageName,
-        cefr_level: "A1",
-        placement_completed: true
-      },
-      { onConflict: "user_id,language_code" }
-    );
-    if (learnErr) {
-      setError(learnErr.message);
-      return;
-    }
-
-    const { error: placeErr } = await supabase.from("placements").upsert(
-      {
-        user_id: user.id,
-        language_code: languageCode,
-        cefr_level: "A1",
-        score: 0,
-        total_questions: 0,
-        weak_areas: [],
-        skipped: true,
-        completed_at: new Date().toISOString()
-      },
-      { onConflict: "user_id,language_code" }
-    );
-    if (placeErr) {
-      setError(placeErr.message);
-      return;
-    }
-
-    router.push(`/learn/${languageCode}`);
-  }, [languageCode, languageName, router, supabase]);
+  }, [languageCode, languageName, router]);
 
   const selectOption = (option: string) => {
     if (!currentQuestion) return;
@@ -304,12 +345,55 @@ export default function PlacementTestPage() {
     );
   }
 
+  if (stage === "generating") {
+    return (
+      <BridgrPageLoading title="Building your personal course" subtitle={null}>
+        <p
+          key={rotatingIndex}
+          className="mt-3 text-center text-sm text-slate-500 transition-opacity duration-500"
+        >
+          {rotatingMessages[rotatingIndex]}
+        </p>
+      </BridgrPageLoading>
+    );
+  }
+
+  if (introGenerating) {
+    return (
+      <BridgrPageLoading
+        title="Generating your test…"
+        subtitle="This usually takes a few seconds"
+      />
+    );
+  }
+
+  if (stage === 3) {
+    return (
+      <BridgrPageLoading
+        title="Analysing your results…"
+        subtitle="This may take a moment"
+      />
+    );
+  }
+
   return (
     <main
-      className={`min-h-screen bg-[#F8FAF9] px-5 pt-8 ${stage === 2 ? "pb-32" : "pb-28"}`}
+      className={`min-h-screen bg-[#F8FAF9] px-5 ${stage === 1 ? "pt-0" : "pt-8"} ${stage === 2 ? "pb-32" : "pb-28"}`}
     >
       {stage === 1 ? (
-        <section className="mx-auto max-w-lg">
+        <>
+          <div className="flex items-center justify-between px-6 pt-6">
+            <button
+              type="button"
+              onClick={() => router.push("/dashboard")}
+              className="rounded-lg p-1 hover:bg-slate-100"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-slate-400" />
+            </button>
+            <div className="shrink-0" aria-hidden />
+          </div>
+          <section className="mx-auto max-w-lg">
           <h1 className="font-serif text-3xl font-normal text-[#0F1A14]">Test your {languageName}</h1>
           <p className="mt-3 text-sm text-slate-600">
             10 questions to find your level. Takes about 2–3 minutes.
@@ -329,18 +413,7 @@ export default function PlacementTestPage() {
 
           {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
 
-          {introGenerating ? (
-            <div className="mt-10 flex flex-col items-center rounded-2xl border border-slate-200 bg-white py-10">
-              <div
-                className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#2D6A4F]"
-                aria-hidden
-              />
-              <p className="mt-4 text-sm font-medium text-slate-700">Generating your test…</p>
-              <p className="mt-1 text-xs text-slate-500">This usually takes a few seconds</p>
-            </div>
-          ) : (
-            <>
-              <div className="mt-10 flex flex-col gap-3">
+          <div className="mt-10 flex flex-col gap-3">
                 <button
                   type="button"
                   onClick={() => void startTest()}
@@ -350,8 +423,12 @@ export default function PlacementTestPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => void skipAsBeginner()}
-                  className="w-full rounded-2xl border-2 border-slate-200 bg-white py-4 text-base font-semibold text-slate-700"
+                  disabled={introGenerating}
+                  onClick={() => {
+                    setStage("generating");
+                    void skipAsBeginner();
+                  }}
+                  className="w-full rounded-2xl border-2 border-slate-200 bg-white py-4 text-base font-semibold text-slate-700 disabled:opacity-50"
                 >
                   I&apos;m a complete beginner
                 </button>
@@ -400,12 +477,11 @@ export default function PlacementTestPage() {
                   </button>
                 ) : null}
               </div>
-            </>
-          )}
         </section>
+        </>
       ) : null}
 
-      {(stage === 2 && currentQuestion) || stage === 3 ? (
+      {stage === 2 && currentQuestion ? (
         <>
           <div className="sticky top-0 z-40 -mx-5 border-b border-slate-100 bg-[#F8FAF9] px-5 py-3">
             {exitConfirmOpen ? (
@@ -444,8 +520,6 @@ export default function PlacementTestPage() {
             )}
           </div>
 
-      {stage === 2 && currentQuestion ? (
-        <>
         <section className="mx-auto max-w-lg">
           <div className="mb-6">
             <div className="mb-1 flex justify-between text-xs text-slate-500">
@@ -531,20 +605,6 @@ export default function PlacementTestPage() {
             </button>
           </div>
         </div>
-        </>
-      ) : null}
-
-      {stage === 3 ? (
-        <section className="mx-auto flex max-w-lg flex-col items-center py-20">
-          <div
-            className="h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#2D6A4F]"
-            aria-hidden
-          />
-          <p className="mt-6 font-medium text-slate-700">Analysing your results…</p>
-          <p className="mt-1 animate-pulse text-sm text-slate-500">This may take a moment</p>
-        </section>
-      ) : null}
-
         </>
       ) : null}
 

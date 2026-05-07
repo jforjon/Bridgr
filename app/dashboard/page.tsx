@@ -67,7 +67,6 @@ export default async function DashboardPage() {
   const name = (profileData?.name ?? "").trim() || "there";
   const knownLanguages = (knownLanguageData ?? []) as KnownLanguage[];
   const learningRows = (learningLanguageData ?? []) as LearningLanguage[];
-  const targetLanguage = learningRows[0] ?? null;
   const streak = (progressRows ?? []).reduce(
     (max, row) => Math.max(max, row.streak_days ?? 0),
     0
@@ -75,13 +74,12 @@ export default async function DashboardPage() {
   const dueWords = dueCount ?? 0;
   const todayWords = todayWordsError ? 0 : todayWordsCount ?? 0;
   const totalWords = totalFlashcardsCount ?? 0;
-  const targetFlag =
-    targetLanguage != null
-      ? (SUPPORTED_LANGUAGES.find((language) => language.code === targetLanguage.language_code)?.flag ??
-        "🌍")
-      : null;
-
   const hasLearningLanguage = learningRows.length > 0;
+  const firstLearningCode = learningRows[0]?.language_code?.toLowerCase().trim() ?? "";
+  const startLessonHref =
+    firstLearningCode.length > 0
+      ? `/learn/${encodeURIComponent(firstLearningCode)}`
+      : "/languages/add";
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] relative pb-20">
@@ -119,7 +117,7 @@ export default async function DashboardPage() {
       {hasLearningLanguage ? (
         <section className="px-5 mb-6 flex flex-col gap-3">
           <Link
-            href="/learn"
+            href={startLessonHref}
             className="w-full bg-[#2D6A4F] text-white rounded-2xl py-4 font-semibold text-base text-center"
           >
             Start lesson
@@ -139,34 +137,54 @@ export default async function DashboardPage() {
         </section>
       ) : null}
 
-      <section className="px-5 mb-24">
-        {targetLanguage ? (
-          <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
-            <span className="text-[10px] uppercase tracking-widest text-slate-500">LEARNING</span>
-            <h3 className="mt-2 font-serif text-xl text-[#0F1A14]">
-              <span className="mr-2">{targetFlag}</span>
-              {targetLanguage.language_name}
-            </h3>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {knownLanguages.length > 0 ? (
-                knownLanguages.map((language) => {
-                  const flag =
-                    SUPPORTED_LANGUAGES.find((entry) => entry.code === language.language_code)?.flag ??
-                    "🌍";
-                  return (
-                    <span
-                      key={language.id}
-                      className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
-                    >
-                      {flag} {language.language_name}
-                    </span>
-                  );
-                })
-              ) : (
-                <span className="text-sm text-slate-500">No known languages set</span>
-              )}
+      <section className="px-5 mb-24 flex flex-col gap-3">
+        {learningRows.length > 0 ? (
+          <>
+            {learningRows.map((row) => {
+              const rowFlag =
+                SUPPORTED_LANGUAGES.find((entry) => entry.code === row.language_code)?.flag ?? "🌍";
+              return (
+                <div
+                  key={row.id}
+                  className="rounded-2xl border-0 bg-white p-5 shadow-sm"
+                >
+                  <span className="text-[10px] uppercase tracking-widest text-slate-500">LEARNING</span>
+                  <h3 className="mt-2 font-serif text-xl text-[#0F1A14]">
+                    <span className="mr-2">{rowFlag}</span>
+                    {row.language_name}
+                  </h3>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Level{" "}
+                    <span className="font-semibold text-[#2D6A4F]">{row.cefr_level}</span>
+                  </p>
+                </div>
+              );
+            })}
+            <div className="rounded-2xl border-0 bg-white p-5 shadow-sm">
+              <span className="text-[10px] uppercase tracking-widest text-slate-500">
+                LANGUAGES YOU SPEAK
+              </span>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {knownLanguages.length > 0 ? (
+                  knownLanguages.map((language) => {
+                    const flag =
+                      SUPPORTED_LANGUAGES.find((entry) => entry.code === language.language_code)?.flag ??
+                      "🌍";
+                    return (
+                      <span
+                        key={language.id}
+                        className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600"
+                      >
+                        {flag} {language.language_name}
+                      </span>
+                    );
+                  })
+                ) : (
+                  <span className="text-sm text-slate-500">No known languages set</span>
+                )}
+              </div>
             </div>
-          </div>
+          </>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center">
             <p className="mb-2 font-serif text-xl text-[#0F1A14]">What do you want to learn?</p>

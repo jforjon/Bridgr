@@ -48,7 +48,6 @@ export default async function ProfilePage() {
       email={profileData?.email ?? ""}
       knownLanguages={knownLanguages}
       learningLanguages={learningLanguages}
-      hasLearningLanguage={learningLanguages.length > 0}
       wordsLearned={flashcardCount ?? 0}
       streak={streak}
     />

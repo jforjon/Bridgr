@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { generateHint } from "@/lib/hint-engine";
+import { createClient } from "@/lib/supabase/server";
 import type { Hint, Proficiency } from "@/types";
 
 interface HintRequestBody {

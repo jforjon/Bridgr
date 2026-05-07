@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
@@ -14,7 +15,6 @@ interface ProfileScreenClientProps {
   email: string;
   knownLanguages: KnownLanguage[];
   learningLanguages: LearningLanguage[];
-  hasLearningLanguage: boolean;
   wordsLearned: number;
   streak: number;
 }
@@ -53,7 +53,6 @@ export default function ProfileScreenClient({
   email,
   knownLanguages,
   learningLanguages,
-  hasLearningLanguage,
   wordsLearned,
   streak
 }: ProfileScreenClientProps) {
@@ -65,6 +64,13 @@ export default function ProfileScreenClient({
   const [savingName, setSavingName] = useState(false);
   const [savedName, setSavedName] = useState(false);
   const [error, setError] = useState("");
+  const [learningList, setLearningList] = useState<LearningLanguage[]>(learningLanguages);
+  const [removeTarget, setRemoveTarget] = useState<LearningLanguage | null>(null);
+  const [removing, setRemoving] = useState(false);
+
+  useEffect(() => {
+    setLearningList(learningLanguages);
+  }, [learningLanguages]);
 
   const languageFlagsByCode = useMemo(() => {
     return new Map([
@@ -129,6 +135,27 @@ export default function ProfileScreenClient({
     await supabase.auth.signOut();
     router.push("/");
   };
+
+  const confirmRemoveLanguage = async () => {
+    if (!removeTarget) return;
+    setRemoving(true);
+    setError("");
+    const { error: deleteError } = await supabase
+      .from("learning_languages")
+      .delete()
+      .eq("user_id", userId)
+      .eq("language_code", removeTarget.language_code);
+    setRemoving(false);
+    if (deleteError) {
+      setError(deleteError.message);
+      return;
+    }
+    setLearningList((prev) => prev.filter((l) => l.id !== removeTarget.id));
+    setRemoveTarget(null);
+    router.refresh();
+  };
+
+  const hasLearning = learningList.length > 0;
 
   return (
     <main className="pb-28">
@@ -198,16 +225,11 @@ export default function ProfileScreenClient({
       </section>
 
       <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <p className="text-xs uppercase tracking-widest text-slate-500">
-            Languages I&apos;m learning
-          </p>
-          <Link href="/languages/add" className="shrink-0 text-sm text-[#2D6A4F]">
-            Edit
-          </Link>
-        </div>
+        <p className="mb-3 text-xs uppercase tracking-widest text-slate-500">
+          Languages I&apos;m learning
+        </p>
 
-        {learningLanguages.length === 0 ? (
+        {!hasLearning ? (
           <div>
             <p className="text-sm text-slate-500">No languages yet</p>
             <Link href="/languages/add" className="mt-2 inline-block text-sm font-medium text-[#2D6A4F]">
@@ -215,33 +237,82 @@ export default function ProfileScreenClient({
             </Link>
           </div>
         ) : (
-          <div className="space-y-2">
-            {learningLanguages.map((language) => (
-              <div key={language.id} className="flex items-center justify-between gap-2">
-                <div className="flex min-w-0 flex-wrap items-center gap-2">
-                  <span className="text-xl">
+          <div className="space-y-3">
+            {learningList.map((language) => (
+              <div
+                key={language.id}
+                className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
+              >
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <span className="text-xl shrink-0">
                     {languageFlagsByCode.get(language.language_code) ?? "🌍"}
                   </span>
-                  <span className="font-medium text-slate-900">{language.language_name}</span>
+                  <span className="min-w-0 truncate font-medium text-slate-900">{language.language_name}</span>
+                  <span
+                    className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getProficiencyBadgeClass(
+                      language.cefr_level
+                    )}`}
+                  >
+                    {language.cefr_level}
+                  </span>
                 </div>
-                <span
-                  className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getProficiencyBadgeClass(
-                    language.cefr_level
-                  )}`}
+                <button
+                  type="button"
+                  onClick={() => setRemoveTarget(language)}
+                  className="shrink-0 rounded-lg p-1 text-slate-300 hover:text-red-400"
+                  aria-label={`Remove ${language.language_name}`}
                 >
-                  {language.cefr_level}
-                </span>
+                  <X className="h-4 w-4" />
+                </button>
               </div>
             ))}
-            <Link
-              href="/languages/add"
-              className="mt-3 inline-block text-sm font-medium text-[#2D6A4F]"
-            >
+            <Link href="/languages/add" className="mt-2 inline-block text-sm font-medium text-[#2D6A4F]">
               Add a language
             </Link>
           </div>
         )}
       </section>
+
+      {removeTarget ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/40 px-4 pt-40"
+          role="presentation"
+          onClick={() => !removing && setRemoveTarget(null)}
+        >
+          <div
+            className="mx-auto max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-lang-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 id="remove-lang-title" className="font-serif text-xl text-[#0F1A14]">
+              Remove {removeTarget.language_name}?
+            </h2>
+            <p className="mt-2 text-sm text-slate-500">
+              Your progress will be saved but this language will be removed from your active courses.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                disabled={removing}
+                onClick={() => setRemoveTarget(null)}
+                className="flex-1 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={removing}
+                onClick={() => void confirmRemoveLanguage()}
+                className="flex-1 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {removing ? "Removing…" : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
         <div className="mb-3 flex items-center justify-between">
@@ -301,7 +372,7 @@ export default function ProfileScreenClient({
         Sign out
       </Button>
 
-      <BottomNav activeTab="profile" hasLearningLanguage={hasLearningLanguage} />
+      <BottomNav activeTab="profile" hasLearningLanguage={hasLearning} />
     </main>
   );
 }

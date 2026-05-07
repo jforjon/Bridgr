@@ -6,7 +6,7 @@ import { createPlacementSession, type PlacementStoredQuestion } from "@/lib/plac
 
 export const runtime = "nodejs";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-4-5";
 const MAX_TOKENS = 3000;
 
 const SYSTEM_PROMPT =

@@ -20,7 +20,7 @@ export async function generateHint({
 } | null> {
   try {
     const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-4-5",
       max_tokens: 300,
       system:
         "You are an expert comparative linguist. Find the single most useful cross-language memory bridge for a language learner. For vocabulary: identify cognates, shared Latin/Greek roots, false friends. For grammar: identify structural parallels. Be specific and concrete.",

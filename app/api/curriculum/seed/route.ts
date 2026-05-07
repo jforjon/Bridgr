@@ -160,7 +160,7 @@ export async function POST(request: Request) {
 
   async function runAnthropicUserPrompt(userContent: string): Promise<string> {
     const message = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-haiku-4-5",
       max_tokens: MAX_OUTPUT_TOKENS,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userContent }]

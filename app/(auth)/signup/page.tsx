@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,21 +131,31 @@ export default function SignUpPage() {
             <label htmlFor="password" className="text-foreground text-sm font-medium">
               Password
             </label>
-            <input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                if (fieldErrors.password) {
-                  setFieldErrors((current) => ({ ...current, password: undefined }));
-                }
-              }}
-              className={`mt-1.5 w-full rounded-xl border bg-card h-12 px-4 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
-                fieldErrors.password ? "border-red-500" : "border-input"
-              }`}
-            />
+            <div className="relative mt-1.5">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) {
+                    setFieldErrors((current) => ({ ...current, password: undefined }));
+                  }
+                }}
+                className={`w-full rounded-xl border bg-card h-12 pl-4 pr-11 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
+                  fieldErrors.password ? "border-red-500" : "border-input"
+                }`}
+              />
+              <button
+                type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F]"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             {fieldErrors.password ? (
               <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
             ) : null}
@@ -152,21 +165,31 @@ export default function SignUpPage() {
             <label htmlFor="confirmPassword" className="text-foreground text-sm font-medium">
               Confirm password
             </label>
-            <input
-              id="confirmPassword"
-              type="password"
-              placeholder="••••••••"
-              value={confirmPassword}
-              onChange={(e) => {
-                setConfirmPassword(e.target.value);
-                if (fieldErrors.confirmPassword) {
-                  setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
-                }
-              }}
-              className={`mt-1.5 w-full rounded-xl border bg-card h-12 px-4 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
-                fieldErrors.confirmPassword ? "border-red-500" : "border-input"
-              }`}
-            />
+            <div className="relative mt-1.5">
+              <input
+                id="confirmPassword"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={confirmPassword}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  if (fieldErrors.confirmPassword) {
+                    setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
+                  }
+                }}
+                className={`w-full rounded-xl border bg-card h-12 pl-4 pr-11 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
+                  fieldErrors.confirmPassword ? "border-red-500" : "border-input"
+                }`}
+              />
+              <button
+                type="button"
+                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F]"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             {fieldErrors.confirmPassword ? (
               <p className="mt-1 text-sm text-red-600">{fieldErrors.confirmPassword}</p>
             ) : null}

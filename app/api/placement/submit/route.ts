@@ -10,7 +10,7 @@ import {
 
 export const runtime = "nodejs";
 
-const MODEL = "claude-haiku-4-5-20251001";
+const MODEL = "claude-haiku-4-5";
 
 function normalizeAnswer(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
@@ -75,40 +75,66 @@ function isCefrLevel(value: unknown): value is CEFRLevel {
   return typeof value === "string" && (CEFR_LEVELS as readonly string[]).includes(value);
 }
 
-export async function POST(request: Request) {
-  const supabase = createClient();
-  const {
-    data: { user }
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+async function triggerCourseGeneration(request: Request, language_code: string): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!baseUrl) {
+    console.error("course generation skipped: NEXT_PUBLIC_APP_URL is not set");
+    return;
   }
-
-  let raw: Record<string, unknown>;
+  const origin = baseUrl.replace(/\/$/, "");
   try {
-    raw = (await request.json()) as Record<string, unknown>;
+    const courseRes = await fetch(`${origin}/api/course/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        cookie: request.headers.get("cookie") ?? ""
+      },
+      body: JSON.stringify({ language_code: language_code.toLowerCase().trim() })
+    });
+    if (!courseRes.ok) {
+      console.error("course generation failed:", await courseRes.text());
+    }
+  } catch (e) {
+    console.error("course generation request failed:", e);
+  }
+}
+
+export async function POST(request: Request) {
+  let body: Record<string, unknown>;
+  try {
+    body = (await request.json()) as Record<string, unknown>;
   } catch {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  if (raw.skipped === true) {
+  const supabase = createClient();
+
+  /** Beginner skip / self-report: no session, no scoring, no Anthropic. */
+  if (body.skipped === true) {
+    console.log("placement/submit body:", body);
+
+    const {
+      data: { user }
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const language_code =
-      typeof raw.language_code === "string" ? raw.language_code.toLowerCase().trim() : "";
-    const cefr_level = raw.cefr_level;
+      typeof body.language_code === "string" ? body.language_code.toLowerCase().trim() : "";
     const language_name =
-      typeof raw.language_name === "string" && raw.language_name.trim()
-        ? raw.language_name.trim()
+      typeof body.language_name === "string" && body.language_name.trim()
+        ? body.language_name.trim()
         : resolveLanguageNameForSubmit(language_code);
+    const cefr_level: CEFRLevel = isCefrLevel(body.cefr_level) ? body.cefr_level : "A1";
+    const now = new Date().toISOString();
 
     if (!language_code) {
       return NextResponse.json({ error: "Invalid body: require language_code." }, { status: 400 });
     }
-    if (!isCefrLevel(cefr_level)) {
-      return NextResponse.json({ error: "Invalid body: require valid cefr_level." }, { status: 400 });
-    }
 
-    const { error: placementError } = await supabase.from("placements").upsert(
+    const { error: placementsError } = await supabase.from("placements").upsert(
       {
         user_id: user.id,
         language_code,
@@ -117,46 +143,53 @@ export async function POST(request: Request) {
         total_questions: 0,
         weak_areas: [],
         skipped: true,
-        completed_at: new Date().toISOString()
+        completed_at: now
       },
       { onConflict: "user_id,language_code" }
     );
 
-    if (placementError) {
-      console.error("[placement/submit] placements upsert (self-report):", placementError);
-      return NextResponse.json({ error: placementError.message }, { status: 500 });
+    if (placementsError) {
+      console.log("placements upsert error:", placementsError);
+      return NextResponse.json({ error: placementsError.message }, { status: 500 });
     }
 
-    const { error: learningError } = await supabase.from("learning_languages").upsert(
+    const { error: llError } = await supabase.from("learning_languages").upsert(
       {
         user_id: user.id,
         language_code,
         language_name,
         cefr_level,
-        placement_completed: true
+        placement_completed: true,
+        last_accessed_at: now
       },
       { onConflict: "user_id,language_code" }
     );
 
-    if (learningError) {
-      console.error("[placement/submit] learning_languages upsert (self-report):", learningError);
-      return NextResponse.json({ error: learningError.message }, { status: 500 });
+    if (llError) {
+      console.log("learning_languages upsert error:", llError);
+      return NextResponse.json({ error: llError.message }, { status: 500 });
     }
 
-    return NextResponse.json({
-      cefr_level,
-      score: 0,
-      total: 0,
-      weak_areas: [] as string[]
-    });
+    await triggerCourseGeneration(request, language_code);
+
+    console.log("placement/submit response: skipped success");
+    return NextResponse.json({ cefr_level, skipped: true });
+  }
+
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured." }, { status: 500 });
   }
 
-  const body = raw as unknown as SubmitTestBody;
-  const { test_session_id, answers } = body;
+  const gradedBody = body as unknown as SubmitTestBody;
+  const { test_session_id, answers } = gradedBody;
   if (!test_session_id || !Array.isArray(answers)) {
     return NextResponse.json(
       { error: "Invalid body: require test_session_id and answers array." },
@@ -237,6 +270,8 @@ export async function POST(request: Request) {
     console.error("[placement/submit] learning_languages upsert:", learningError);
     return NextResponse.json({ error: learningError.message }, { status: 500 });
   }
+
+  await triggerCourseGeneration(request, session.language_code);
 
   deletePlacementSession(test_session_id);
 

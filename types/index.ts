@@ -102,6 +102,7 @@ export interface Unit {
   topic_key: string;
   title: string;
   description: string | null;
+  personalisation_note?: string | null;
   cefr_level: CEFRLevel;
   order_index: number;
   status: "locked" | "available" | "completed";
