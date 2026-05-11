@@ -26,8 +26,6 @@ export interface Profile {
   sessions_this_week: number;
   week_start_date: string;
   best_weekly_streak: number;
-  subscription_status: "free" | "pro";
-  stripe_customer_id: string | null;
   created_at: string;
 }
 

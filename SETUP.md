@@ -27,9 +27,6 @@ Required values:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `ANTHROPIC_API_KEY`
-- `STRIPE_SECRET_KEY`
-- `STRIPE_WEBHOOK_SECRET`
-- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_APP_URL` (default is `http://localhost:3000`)
 
 ## 4) Create the Supabase schema
@@ -55,13 +52,3 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
-
-## 7) Stripe webhook testing (optional, local)
-
-Use Stripe CLI to forward webhooks:
-
-```bash
-stripe listen --forward-to localhost:3000/api/webhooks/stripe
-```
-
-Set `STRIPE_WEBHOOK_SECRET` from Stripe CLI output.
