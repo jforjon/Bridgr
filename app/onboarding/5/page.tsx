@@ -1,5 +1,8 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
+import { Suspense } from "react";
 import { IconStar } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,7 +14,7 @@ import { ONBOARDING_LANGUAGE_STORAGE_KEY } from "../shared";
 const bottomBar =
   "fixed bottom-0 left-0 right-0 z-50 border-t border-teal-700/50 bg-teal-900 px-6 py-4";
 
-export default function OnboardingStepFivePage() {
+function OnboardingStepFiveContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -24,7 +27,7 @@ export default function OnboardingStepFivePage() {
   useEffect(() => {
     const queryLanguage = searchParams.get("language");
     const storedLanguage =
-      typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_LANGUAGE_STORAGE_KEY) : null;
+      typeof window !== "undefined" ? window.localStorage.getItem(ONBOARDING_LANGUAGE_STORAGE_KEY) : null;
     const resolvedLanguage = queryLanguage ?? storedLanguage ?? "";
     setLanguageCode(resolvedLanguage);
   }, [searchParams]);
@@ -114,5 +117,13 @@ export default function OnboardingStepFivePage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function OnboardingStepFivePage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-teal-200">Loading…</p>}>
+      <OnboardingStepFiveContent />
+    </Suspense>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
+import { Suspense } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,7 +17,7 @@ const timeInputClass =
 const bottomBar =
   "fixed bottom-0 left-0 right-0 z-50 border-t border-teal-700/50 bg-teal-900 px-6 py-4";
 
-export default function OnboardingStepSixPage() {
+function OnboardingStepSixContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -29,7 +32,7 @@ export default function OnboardingStepSixPage() {
   useEffect(() => {
     const queryLanguage = searchParams.get("language");
     const storedLanguage =
-      typeof window !== "undefined" ? localStorage.getItem(ONBOARDING_LANGUAGE_STORAGE_KEY) : null;
+      typeof window !== "undefined" ? window.localStorage.getItem(ONBOARDING_LANGUAGE_STORAGE_KEY) : null;
     setLanguageCode(queryLanguage ?? storedLanguage ?? "");
   }, [searchParams]);
 
@@ -169,5 +172,13 @@ export default function OnboardingStepSixPage() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function OnboardingStepSixPage() {
+  return (
+    <Suspense fallback={<p className="text-sm text-teal-200">Loading…</p>}>
+      <OnboardingStepSixContent />
+    </Suspense>
   );
 }
