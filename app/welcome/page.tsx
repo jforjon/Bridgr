@@ -1,6 +1,14 @@
 import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import LandingPageClient from "../LandingPageClient";
 
-/** Public landing lives at `/` (`app/page.tsx`). This path exists for bookmarks and links. */
-export default function WelcomeRedirectPage() {
-  redirect("/");
+export default async function WelcomePage() {
+  const supabase = createClient();
+  const {
+    data: { user }
+  } = await supabase.auth.getUser();
+  if (user) {
+    redirect("/learn");
+  }
+  return <LandingPageClient />;
 }
