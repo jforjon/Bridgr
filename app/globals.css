@@ -4,22 +4,22 @@
 
 @layer base {
   :root {
-    --background: #F8FAF9;
-    --foreground: #0F1A14;
-    --border: #dde8e1;
+    --color-surface: #1a3d38;
+    --color-surface-2: #122f2b;
+    --color-border: #2f6b62;
+    --color-muted: #8fbfb8;
+    --color-primary: #7fff5f;
+    --color-primary-text: #1d6610;
   }
 
   * {
-    border-color: var(--border);
+    border-color: var(--color-border);
   }
 
+  html,
   body {
-    background-color: var(--background);
-    color: var(--foreground);
-    font-family: var(--font-body), sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: var(--font-heading), serif;
+    background-color: #0d2b27;
+    color: #e8f5f2;
+    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   }
 }

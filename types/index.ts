@@ -15,10 +15,31 @@ export interface Profile {
   id: string;
   email: string;
   name?: string | null;
+  native_language_code: string | null;
+  native_language_name: string | null;
+  /** Default: 3 */
+  weekly_goal: number;
+  notification_enabled: boolean;
+  notification_days: string[];
+  notification_time: string;
+  weekly_streak: number;
+  sessions_this_week: number;
+  week_start_date: string;
+  best_weekly_streak: number;
   subscription_status: "free" | "pro";
   stripe_customer_id: string | null;
   created_at: string;
 }
+
+export interface Achievement {
+  id: string;
+  user_id: string;
+  type: string;
+  value: number;
+  unlocked_at: string;
+}
+
+export type WeeklyGoalOption = 1 | 2 | 3 | 4 | 5 | 7;
 
 export interface KnownLanguage {
   id: string;
@@ -170,6 +191,23 @@ export interface LanguageOption {
   name: string;
   flag: string;
 }
+
+export const WEEKLY_GOAL_OPTIONS: {
+  value: WeeklyGoalOption;
+  label: string;
+  description: string;
+}[] = [
+  { value: 1, label: "Once a week", description: "Light touch" },
+  { value: 2, label: "Twice a week", description: "Building a habit" },
+  {
+    value: 3,
+    label: "3 times a week",
+    description: "Recommended — most learners hit this"
+  },
+  { value: 4, label: "4 times a week", description: "Serious learner" },
+  { value: 5, label: "5 times a week", description: "Intensive" },
+  { value: 7, label: "Every day", description: "Full commitment" }
+];
 
 export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: "en", name: "English", flag: "🇬🇧" },

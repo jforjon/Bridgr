@@ -29,16 +29,16 @@ export default function BridgrPageLoading({
   const resolvedSubtitle = subtitle === undefined ? "Loading words and hints" : subtitle;
 
   return (
-    <main className={`flex min-h-screen flex-col bg-[#F8FAF9] pb-24 ${className}`}>
-      <p className="px-6 pt-8 font-serif text-2xl text-[#2D6A4F]">Bridgr</p>
+    <main className={`flex min-h-screen flex-col bg-teal-900 pb-24 ${className}`}>
+      <p className="px-6 pt-8 font-sans font-extrabold text-2xl text-lime-300">Bridgr</p>
       <div className="flex flex-1 flex-col items-center px-6">
         <div
-          className="mx-auto mt-32 h-16 w-16 shrink-0 rounded-full border-2 border-[#2D6A4F] bg-green-50 animate-pulse"
+          className="mx-auto mt-32 h-16 w-16 shrink-0 rounded-full border-2 border-teal-400 bg-teal-800 animate-pulse"
           aria-hidden
         />
-        <p className="mt-8 text-center font-serif text-xl text-[#0F1A14]">{title}</p>
+        <p className="mt-8 text-center font-sans font-extrabold text-xl text-white">{title}</p>
         {resolvedSubtitle !== null && resolvedSubtitle !== "" ? (
-          <p className="mt-2 text-center text-sm text-slate-400">{resolvedSubtitle}</p>
+          <p className="mt-2 text-center text-sm text-teal-200">{resolvedSubtitle}</p>
         ) : null}
         {children}
       </div>

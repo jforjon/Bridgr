@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
@@ -10,7 +9,7 @@ const SYSTEM_PROMPT =
 interface SeedRequestBody {
   language_code: string;
   language_name: string;
-  cefr_level: "A1";
+  cefr_level: "A1" | "A2" | "B1" | "B2" | "C1" | "C2";
 }
 
 interface CurriculumExample {
@@ -44,10 +43,10 @@ interface CurriculumVocabRow {
   source: string;
 }
 
-const MAX_OUTPUT_TOKENS = 8000;
+const MAX_OUTPUT_TOKENS = 16000;
 
-function buildTopicsPrompt(languageName: string, languageCode: string): string {
-  return `Generate A1 curriculum topics and rules for ${languageName} (${languageCode}).
+function buildTopicsPrompt(languageName: string, languageCode: string, cefrLevel: string): string {
+  return `Generate ${cefrLevel} curriculum topics and rules for ${languageName} (${languageCode}).
 
 Return ONLY valid JSON (double-quoted keys and strings). Do not include a "vocabulary" field. Use this exact structure:
 {
@@ -72,11 +71,11 @@ Return ONLY valid JSON (double-quoted keys and strings). Do not include a "vocab
 }
 
 Include exactly 6 topics with these topic_key values: greetings, numbers_time, grammar_present, family_daily, food_drink, travel_directions.
-For grammar topics, include 2-3 rules with clear explanations at A1 level and 3 examples each (sentence + translation).`;
+For grammar topics, include 2-3 rules with clear explanations at ${cefrLevel} level and 3 examples each (sentence + translation).`;
 }
 
-function buildVocabularyPrompt(languageName: string, languageCode: string): string {
-  return `Generate exactly 60 A1 vocabulary items for ${languageName} (${languageCode}): the most common A1 words per CEFR frequency lists, exactly 10 words per topic_key.
+function buildVocabularyPrompt(languageName: string, languageCode: string, cefrLevel: string): string {
+  return `Generate exactly 60 ${cefrLevel} vocabulary items for ${languageName} (${languageCode}): the most common ${cefrLevel} words per CEFR frequency lists, exactly 10 words per topic_key.
 
 Topic keys (use only these): greetings, numbers_time, grammar_present, family_daily, food_drink, travel_directions.
 
@@ -89,7 +88,7 @@ Return ONLY valid JSON (double-quoted keys and strings). Do not include a "topic
       "part_of_speech": string,
       "frequency_rank": number,
       "topic_key": string,
-      "source": "CEFR A1 word list"
+      "source": "CEFR ${cefrLevel} word list"
     }
   ]
 }`;
@@ -137,9 +136,10 @@ export async function POST(request: Request) {
   }
 
   const { language_code, language_name, cefr_level } = body;
-  if (!language_code || !language_name || cefr_level !== "A1") {
+  const VALID_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
+  if (!language_code || !language_name || !VALID_LEVELS.includes(cefr_level)) {
     return NextResponse.json(
-      { error: "Invalid body: require language_code, language_name, and cefr_level 'A1'." },
+      { error: "Invalid body: require language_code, language_name, and a valid cefr_level (A1–C2)." },
       { status: 400 }
     );
   }
@@ -156,26 +156,35 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
   async function runAnthropicUserPrompt(userContent: string): Promise<string> {
-    const message = await client.messages.create({
-      model: "claude-haiku-4-5",
-      max_tokens: MAX_OUTPUT_TOKENS,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: userContent }]
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "x-api-key": process.env.ANTHROPIC_API_KEY!,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: MAX_OUTPUT_TOKENS,
+        system: SYSTEM_PROMPT,
+        messages: [{ role: "user", content: userContent }]
+      })
     });
-    const block = message.content[0];
-    const text = block.type === "text" ? block.text : "";
-    if (!text) {
-      throw new Error("Empty model response.");
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Anthropic API error ${response.status}: ${errText}`);
     }
+    const data = (await response.json()) as { content: Array<{ type: string; text: string }> };
+    const block = data.content[0];
+    const text = block?.type === "text" ? block.text : "";
+    if (!text) throw new Error("Empty model response.");
     return text;
   }
 
   let topicsText: string;
   try {
-    topicsText = await runAnthropicUserPrompt(buildTopicsPrompt(language_name, language_code));
+    topicsText = await runAnthropicUserPrompt(buildTopicsPrompt(language_name, language_code, cefr_level));
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("[curriculum/seed] Anthropic error (topics):", e);
@@ -291,7 +300,9 @@ export async function POST(request: Request) {
 
   let vocabularyText: string;
   try {
-    vocabularyText = await runAnthropicUserPrompt(buildVocabularyPrompt(language_name, language_code));
+    vocabularyText = await runAnthropicUserPrompt(
+      buildVocabularyPrompt(language_name, language_code, cefr_level)
+    );
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
     console.error("[curriculum/seed] Anthropic error (vocabulary):", e);
@@ -335,7 +346,10 @@ export async function POST(request: Request) {
   if (vocabRows.length > 0) {
     const { data: insertedVocab, error: vocabError } = await supabase
       .from("curriculum_vocabulary")
-      .insert(vocabRows)
+      .upsert(vocabRows, {
+        onConflict: "language_code,word",
+        ignoreDuplicates: true
+      })
       .select("id");
 
     if (vocabError) {

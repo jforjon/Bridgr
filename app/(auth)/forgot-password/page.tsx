@@ -1,9 +1,12 @@
 "use client";
 
+import { IconCheck } from "@tabler/icons-react";
 import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+
+const inputClass =
+  "w-full rounded-xl border border-teal-400/30 bg-teal-850 px-4 py-3 text-sm text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -33,31 +36,29 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto w-full max-w-md">
-        <section className="px-6 pb-8 pt-12 text-center">
-          <p className="font-serif text-3xl text-[#2D6A4F]">Bridgr</p>
-          <h1 className="mt-8 font-serif text-2xl text-slate-900">Reset your password</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Enter your email and we&apos;ll send you a reset link
-          </p>
+    <main className="min-h-screen bg-teal-900 text-white">
+      <div className="mx-auto w-full max-w-md px-6">
+        <section className="pb-8 pt-12 text-center">
+          <p className="font-sans text-3xl font-extrabold text-lime-300">Bridgr</p>
+          <h1 className="mt-8 font-sans text-2xl font-extrabold text-white">Reset your password</h1>
+          <p className="mt-2 text-sm text-teal-200">Enter your email and we&apos;ll send you a reset link</p>
         </section>
 
         {successMessage ? (
-          <section className="px-6 text-center">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-green-200 bg-green-50">
-              <span className="text-2xl text-green-600">✓</span>
+          <section className="text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-lime-300/20 bg-lime-300/10">
+              <IconCheck size={28} className="text-lime-300" stroke={2} aria-hidden />
             </div>
-            <h2 className="mt-6 font-serif text-2xl text-slate-900">Check your email</h2>
-            <p className="mt-2 text-sm text-slate-600">We sent a reset link to {email}</p>
-            <Link href="/login" className="mt-8 inline-block text-sm text-[#2D6A4F] hover:underline">
+            <h2 className="mt-6 font-sans text-2xl font-extrabold text-white">Check your email</h2>
+            <p className="mt-2 text-sm text-teal-200">We sent a reset link to {email}</p>
+            <Link href="/login" className="mt-8 inline-block text-sm font-extrabold text-lime-300 hover:underline">
               Back to login
             </Link>
           </section>
         ) : (
           <>
-            <form onSubmit={handleSubmit} className="mt-8 px-6">
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-slate-700">
+            <form onSubmit={handleSubmit} className="mt-8">
+              <label htmlFor="email" className="mb-2 block text-sm font-bold text-white">
                 Email
               </label>
               <input
@@ -66,23 +67,23 @@ export default function ForgotPasswordPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm outline-none transition focus:border-[#2D6A4F] focus:ring-2 focus:ring-[#2D6A4F]/20"
+                className={inputClass}
               />
-              {error ? <p className="mt-3 text-sm text-red-500">{error}</p> : null}
+              {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
               <div className="mt-6">
-                <Button
+                <button
                   type="submit"
                   disabled={loading}
-                  className="w-full rounded-2xl bg-[#2D6A4F] py-4 font-semibold text-white hover:bg-[#255a43] disabled:opacity-70"
+                  className="w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 disabled:opacity-70"
                 >
                   {loading ? "Sending..." : "Send reset link"}
-                </Button>
+                </button>
               </div>
             </form>
 
-            <section className="mt-6 px-6 text-center">
-              <p className="text-sm text-slate-600">Remember your password?</p>
-              <Link href="/login" className="mt-2 inline-block text-sm font-semibold text-[#2D6A4F] hover:underline">
+            <section className="mt-6 text-center">
+              <p className="text-sm text-teal-200">Remember your password?</p>
+              <Link href="/login" className="mt-2 inline-block text-sm font-extrabold text-lime-300 hover:underline">
                 Log in
               </Link>
             </section>

@@ -1,9 +1,11 @@
 "use client";
 
+import { IconX } from "@tabler/icons-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import BottomNav from "@/components/BottomNav";
-import type { KnownLanguage } from "@/types";
+import { evaluateAnswerFromApi, evaluateClientTier1 } from "@/lib/evaluateAnswer";
+import { SUPPORTED_LANGUAGES, type KnownLanguage } from "@/types";
 
 export interface VocabDeckItem {
   word_id: string;
@@ -21,7 +23,7 @@ export interface VocabDeckItem {
 /** Practice: first tap reveals first letter only; no full-word reveal. */
 type PracticeReveal = "hidden" | "first_letter";
 
-export type EvaluateResult = "correct" | "typo" | "close" | "wrong";
+export type EvaluateResult = "correct" | "typo" | "equivalent" | "close" | "wrong";
 
 interface EvalPayload {
   result: EvaluateResult;
@@ -41,70 +43,9 @@ function cycleRevealPractice(s: PracticeReveal): PracticeReveal {
   return "first_letter";
 }
 
-function revealHintTextPractice(s: PracticeReveal): string {
-  if (s === "hidden") return "tap for first letter";
-  return "";
-}
-
-function highlightDiffUser(userText: string, correctText: string): { char: string; bold: boolean }[] {
-  const u = Array.from(userText);
-  const c = Array.from(correctText);
-  const n = Math.max(u.length, c.length);
-  return Array.from({ length: n }, (_, i) => {
-    const uch = u[i] ?? "";
-    const cch = c[i] ?? "";
-    return { char: uch === "" ? "\u00a0" : uch, bold: uch !== cch };
-  });
-}
-
-function highlightDiffCorrect(userText: string, correctText: string): { char: string; bold: boolean }[] {
-  const u = Array.from(userText);
-  const c = Array.from(correctText);
-  const n = Math.max(u.length, c.length);
-  return Array.from({ length: n }, (_, i) => {
-    const uch = u[i] ?? "";
-    const cch = c[i] ?? "";
-    return { char: cch === "" ? "\u00a0" : cch, bold: uch !== cch };
-  });
-}
-
-function resultPillAfterCheck(result: EvaluateResult): { label: string; className: string } {
-  const base = "inline-block rounded-full border px-3 py-1 text-xs font-medium";
-  if (result === "correct" || result === "typo") {
-    return { label: "Correct", className: `${base} bg-green-100 text-green-700 border-green-300` };
-  }
-  if (result === "close") {
-    return {
-      label: "You were close",
-      className: `${base} bg-amber-50 text-amber-700 border-amber-200`
-    };
-  }
-  return { label: "Not quite", className: `${base} bg-red-50 text-red-600 border-red-200` };
-}
 
 function memoryHookParagraph(data: UnderstandPayload): string {
   return (data.hook ?? "").trim();
-}
-
-function DiffLine({
-  label,
-  segments
-}: {
-  label: string;
-  segments: { char: string; bold: boolean }[];
-}) {
-  return (
-    <div>
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-0.5 font-mono text-sm whitespace-pre-wrap break-all">
-        {segments.map((s, i) => (
-          <span key={i} className={s.bold ? "font-bold" : ""}>
-            {s.char}
-          </span>
-        ))}
-      </p>
-    </div>
-  );
 }
 
 type PostEvalUnderstand =
@@ -135,6 +76,11 @@ export interface VocabularyTypingDeckProps {
   onWordPracticeResult?: (result: EvaluateResult) => void;
   /** When set with `showLessonCompletionScreen`, parent handles completion UI instead of the deck. */
   onLessonDeckFinished?: () => void;
+  /** Pre-fetched `/api/understand` payloads keyed by `word_id` (e.g. lesson intro batch). */
+  prefetchedMemoryHooks?: Record<
+    string,
+    { hook: string; type?: string; source_language?: string }
+  >;
 }
 
 export default function VocabularyTypingDeck({
@@ -149,7 +95,8 @@ export default function VocabularyTypingDeck({
   onSessionComplete,
   showLessonCompletionScreen = false,
   onWordPracticeResult,
-  onLessonDeckFinished
+  onLessonDeckFinished,
+  prefetchedMemoryHooks
 }: VocabularyTypingDeckProps) {
   const [index, setIndex] = useState(0);
   const [lessonCompletionVisible, setLessonCompletionVisible] = useState(false);
@@ -166,6 +113,9 @@ export default function VocabularyTypingDeck({
   const [understandLoading, setUnderstandLoading] = useState(false);
   const [error, setError] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+  /** Session summary for completion screen only (mirrors outcomes passed to `onWordPracticeResult`). */
+  const sessionStatsRef = useRef({ correct: 0, review: 0, missed: 0 });
+  const deckStatsKey = useMemo(() => items.map((i) => i.word_id).join("|"), [items]);
 
   const current = useMemo(() => items[index] ?? null, [items, index]);
   /** English gloss the learner should type (database primary answer language). */
@@ -209,6 +159,10 @@ export default function VocabularyTypingDeck({
   }, [index]);
 
   useEffect(() => {
+    sessionStatsRef.current = { correct: 0, review: 0, missed: 0 };
+  }, [deckStatsKey]);
+
+  useEffect(() => {
     if (!current || evalResult) return;
     const t = window.setTimeout(() => inputRef.current?.focus(), 50);
     return () => window.clearTimeout(t);
@@ -227,6 +181,13 @@ export default function VocabularyTypingDeck({
   const finishContinueFlow = useCallback(
     async (practiceResult: EvaluateResult) => {
       onWordPracticeResult?.(practiceResult);
+      if (practiceResult === "correct" || practiceResult === "typo" || practiceResult === "equivalent") {
+        sessionStatsRef.current.correct += 1;
+      } else if (practiceResult === "close") {
+        sessionStatsRef.current.review += 1;
+      } else if (practiceResult === "wrong") {
+        sessionStatsRef.current.missed += 1;
+      }
       const isLast = index === items.length - 1;
       if (isLast && onSessionComplete) {
         if (showLessonCompletionScreen) {
@@ -260,40 +221,37 @@ export default function VocabularyTypingDeck({
 
   const submitCheck = async () => {
     if (!current || evalResult) return;
-    setCheckLoading(true);
     setError("");
     try {
-      const res = await fetch("/api/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          word: current.word,
-          typed_answer: typedAnswer,
-          correct_answer: expectedEnglish,
-          language_code: languageCode,
-          known_languages: knownForEvaluate
-        })
-      });
-      const data = (await res.json().catch(() => ({}))) as EvalPayload & { error?: string };
-      if (!res.ok) {
-        setError(data.error ?? "Could not check your answer.");
-        return;
-      }
-      if (!data.result || !data.message) {
-        setError("Unexpected response from server.");
+      const tier1 = evaluateClientTier1(typedAnswer, expectedEnglish);
+      if (tier1) {
+        setSubmittedAnswer(typedAnswer);
+        setEvalResult({
+          result: tier1.result,
+          message: tier1.message,
+          show_correct: tier1.show_correct,
+          correct_answer: tier1.correct_answer
+        });
         return;
       }
 
+      setCheckLoading(true);
+      const data = await evaluateAnswerFromApi(
+        typedAnswer,
+        current.word,
+        expectedEnglish,
+        languageCode,
+        knownForEvaluate
+      );
       setSubmittedAnswer(typedAnswer);
       setEvalResult({
         result: data.result,
         message: data.message,
-        show_correct: Boolean(data.show_correct),
+        show_correct: data.show_correct,
         correct_answer: data.correct_answer
       });
-    } catch {
-      setError("Network error while checking.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Network error while checking.");
     } finally {
       setCheckLoading(false);
     }
@@ -306,6 +264,13 @@ export default function VocabularyTypingDeck({
     }
     if (evalResult.result !== "close" && evalResult.result !== "wrong") {
       setPostEvalUnderstand({ status: "idle" });
+      return;
+    }
+
+    const prefetched = prefetchedMemoryHooks?.[current.word_id];
+    const preParagraph = memoryHookParagraph({ hook: prefetched?.hook ?? "" });
+    if (preParagraph.trim()) {
+      setPostEvalUnderstand({ status: "ok", paragraph: preParagraph });
       return;
     }
 
@@ -357,12 +322,27 @@ export default function VocabularyTypingDeck({
     evalResult,
     expectedEnglish,
     languageCode,
-    knownForUnderstand
+    knownForUnderstand,
+    prefetchedMemoryHooks
   ]);
 
   const openUnderstand = async () => {
     if (!current) return;
     setUnderstandOpen(true);
+    const prefetched = prefetchedMemoryHooks?.[current.word_id];
+    const preHook = memoryHookParagraph({ hook: prefetched?.hook ?? "" });
+    if (preHook) {
+      const t = prefetched?.type;
+      const hookType =
+        t === "cognate" || t === "similar" || t === "mnemonic" || t === "etymology" ? t : undefined;
+      setUnderstandData({
+        hook: prefetched?.hook ?? preHook,
+        source_language: prefetched?.source_language,
+        type: hookType
+      });
+      setUnderstandLoading(false);
+      return;
+    }
     setUnderstandData(null);
     setUnderstandLoading(true);
     try {
@@ -446,11 +426,36 @@ export default function VocabularyTypingDeck({
     }
   };
 
-  const firstGraphemes = useMemo(() => {
-    if (!current) return { first: "", rest: "" };
-    const arr = Array.from(current.word);
-    return { first: arr[0] ?? "", rest: arr.slice(1).join("") };
-  }, [current]);
+  const firstLetterOfAnswer = useMemo(() => {
+    if (!expectedEnglish) return "";
+    return Array.from(expectedEnglish)[0] ?? "";
+  }, [expectedEnglish]);
+
+  const languageDisplayName = useMemo(() => {
+    const found = SUPPORTED_LANGUAGES.find((l) => l.code === languageCode.toLowerCase());
+    if (found) return found.name;
+    if (!languageCode) return "Language";
+    return languageCode.charAt(0).toUpperCase() + languageCode.slice(1);
+  }, [languageCode]);
+
+  const wordMetaLine = useMemo(() => {
+    const lang = languageDisplayName.toUpperCase();
+    const pos = current?.part_of_speech?.trim();
+    if (pos) return `${lang} · ${pos.toUpperCase()}`;
+    return lang;
+  }, [current?.part_of_speech, languageDisplayName]);
+
+  const prefetchHookText = useMemo(() => {
+    const h = prefetchedMemoryHooks?.[current?.word_id ?? ""]?.hook?.trim() ?? "";
+    return h;
+  }, [current?.word_id, prefetchedMemoryHooks]);
+
+  const answerSubtitleLine = useMemo(() => {
+    const primary = expectedEnglish;
+    const raw = (current?.translation ?? "").trim();
+    if (raw && raw !== primary) return `${primary} · ${raw}`;
+    return primary;
+  }, [current?.translation, expectedEnglish]);
 
   if (items.length === 0) {
     return null;
@@ -459,18 +464,18 @@ export default function VocabularyTypingDeck({
   if (lessonCompletionVisible && onSessionComplete) {
     return (
       <>
-        <main className="min-h-screen bg-[#F8FAF9] px-5 pb-32 pt-20">
+        <main className="min-h-screen bg-teal-900 px-5 pb-32 pt-20 text-[#e8f5f2]">
           <div className="mx-auto max-w-lg text-center">
-            <h1 className="font-serif text-2xl text-[#0F1A14]">Lesson complete</h1>
-            <p className="mt-3 text-sm leading-relaxed text-slate-600">
-              You&apos;ve practiced every word in this lesson. Continue to save your progress and
-              return to your course.
+            <h1 className="text-2xl font-extrabold text-[#e8f5f2]">Lesson complete</h1>
+            <p className="mt-3 text-sm leading-relaxed text-teal-200">
+              You&apos;ve practiced every word in this lesson. Save your progress and return to your
+              course.
             </p>
-            {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
+            {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
             <button
               type="button"
               disabled={finishLessonLoading}
-              className="mt-10 w-full rounded-2xl bg-[#2D6A4F] py-4 text-base font-semibold text-white disabled:opacity-50"
+              className="mt-10 w-full rounded-pill bg-lime-300 py-[14px] text-[15px] font-extrabold text-lime-700 disabled:opacity-50"
               onClick={() => {
                 void (async () => {
                   setFinishLessonLoading(true);
@@ -485,7 +490,7 @@ export default function VocabularyTypingDeck({
                 })();
               }}
             >
-              {finishLessonLoading ? "Saving…" : "Continue to course"}
+              {finishLessonLoading ? "Saving…" : "Go to course"}
             </button>
           </div>
         </main>
@@ -497,13 +502,49 @@ export default function VocabularyTypingDeck({
   }
 
   if (sessionComplete || !current) {
+    const s = sessionStatsRef.current;
     return (
       <>
-        <main className="p-6 pb-28">
-          <h1 className="mt-8 text-2xl font-bold text-primary">Session complete</h1>
-          <p className="mt-2 text-sm text-slate-600">
-            Nice work. You reviewed all words in this learning session.
-          </p>
+        <main
+          className="relative flex min-h-screen flex-col bg-teal-900 text-[#e8f5f2]"
+        >
+          <div className="flex flex-1 flex-col items-center justify-center px-5 pb-36 text-center">
+            <p className="mb-6 text-[48px] leading-none" aria-hidden>
+              🎉
+            </p>
+            <h1 className="text-[22px] font-extrabold text-[#e8f5f2]">Session done!</h1>
+            <p className="mt-2 text-[13px] text-teal-200">
+              You reviewed {items.length} {items.length === 1 ? "word" : "words"} in {languageDisplayName}
+            </p>
+            <div className="mt-8 grid w-full max-w-lg grid-cols-3 gap-3">
+              <div className="rounded-[14px] bg-teal-800 px-4 py-4 text-center">
+                <p className="text-2xl font-extrabold text-lime-300">{s.correct}</p>
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-teal-200">
+                  Correct
+                </p>
+              </div>
+              <div className="rounded-[14px] bg-teal-800 px-4 py-4 text-center">
+                <p className="text-2xl font-extrabold text-[#ffd166]">{s.review}</p>
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-teal-200">
+                  Review
+                </p>
+              </div>
+              <div className="rounded-[14px] bg-teal-800 px-4 py-4 text-center">
+                <p className="text-2xl font-extrabold text-[#e8f5f2]">{s.missed}</p>
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-teal-200">
+                  Missed
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="fixed inset-x-0 bottom-0 z-50 mx-5 mb-8">
+            <Link
+              href={exitHref}
+              className="block w-full rounded-pill bg-lime-300 py-[14px] text-center text-[15px] font-extrabold text-lime-700"
+            >
+              Back to home
+            </Link>
+          </div>
         </main>
         {!hideBottomNav ? (
           <BottomNav activeTab="learn" hasLearningLanguage={hasLearningLanguage} />
@@ -512,145 +553,153 @@ export default function VocabularyTypingDeck({
     );
   }
 
+  const evalCorrect =
+    evalResult &&
+    (evalResult.result === "correct" ||
+      evalResult.result === "typo" ||
+      evalResult.result === "equivalent");
+  const evalNeedsWarning =
+    evalResult && (evalResult.result === "wrong" || evalResult.result === "close");
+
   return (
     <>
-      <main className="min-h-screen bg-[#F8FAF9] pb-32">
-        <div className="fixed inset-x-0 top-0 z-40 bg-white">
-          <div className="mx-auto max-w-2xl border-b border-slate-100 px-4 py-3">
-            <div className="grid grid-cols-3 items-center">
-              <Link href={exitHref} className="text-sm font-medium text-slate-600">
-                {exitLabel}
+      <main className="min-h-screen bg-teal-900 pb-40 text-[#e8f5f2]">
+        <div className="sticky top-0 z-40 px-5 pt-4">
+          <div className="rounded-[20px] border border-teal-400 bg-teal-850 px-5 py-4">
+            <div className="flex items-center justify-between">
+              <Link
+                href={exitHref}
+                aria-label={exitLabel}
+                className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#1a3d38] text-[#8fbfb8] transition hover:opacity-90"
+              >
+                <IconX size={18} stroke={1.75} />
               </Link>
-              <p className="text-center text-sm text-slate-600">
-                Word {index + 1} of {items.length}
+              <p className="text-center text-[13px] font-bold text-muted">
+                {`${index + 1} / ${items.length}`}
               </p>
-              <div />
+              <span className="h-[36px] w-[36px] shrink-0" aria-hidden />
             </div>
-            <div className="mt-3 h-1 w-full bg-slate-100">
-              <div className="h-full bg-[#2D6A4F]" style={{ width: `${progressPct}%` }} />
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-teal-700">
+              <div
+                className="h-full rounded-full bg-lime-300 transition-all"
+                style={{ width: `${progressPct}%` }}
+              />
             </div>
           </div>
         </div>
 
-        <div className="mx-auto max-w-2xl px-4 pt-24">
-          {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
+        <div className="mx-auto max-w-lg px-5">
+          {error ? <p className="mb-3 text-center text-sm text-red-400">{error}</p> : null}
 
-          <div className="rounded-3xl border border-slate-100 bg-white p-8 text-center shadow-sm">
+          <div className="mt-32 text-center">
             <button
               type="button"
               onClick={() => setRevealState((s) => cycleRevealPractice(s))}
-              className="w-full text-center outline-none"
+              className="w-full outline-none"
             >
-              {revealState === "first_letter" ? (
-                <span className="font-serif text-5xl font-normal">
-                  <span className="text-amber-600">{firstGraphemes.first}</span>
-                  <span className="text-slate-300">{firstGraphemes.rest}</span>
-                </span>
-              ) : (
-                <span className="font-serif text-5xl font-normal text-[#0F1A14]">{current.word}</span>
-              )}
+              <p className="text-[40px] font-extrabold leading-tight text-white">{current.word}</p>
             </button>
-            {revealHintTextPractice(revealState) ? (
-              <p className="mt-2 text-xs text-slate-400">{revealHintTextPractice(revealState)}</p>
-            ) : null}
-
-            {!evalResult ? (
-              <>
-                <p className="mt-8 text-left text-sm font-medium text-slate-600">
-                  Type the English translation
-                </p>
-                <input
-                  ref={inputRef}
-                  key={current.word_id}
-                  type="text"
-                  value={typedAnswer}
-                  onChange={(e) => setTypedAnswer(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      void submitCheck();
-                    }
-                  }}
-                  placeholder="Type the English translation"
-                  autoFocus
-                  className="mt-2 w-full rounded-2xl border border-slate-200 px-5 py-4 text-lg text-[#0F1A14] outline-none ring-[#2D6A4F] focus:ring-2"
-                />
-                <div className="mt-2 text-left">
-                  <button
-                    type="button"
-                    onClick={() => void openUnderstand()}
-                    className="cursor-pointer border-0 bg-transparent p-0 text-left text-sm text-[#2D6A4F] underline"
-                  >
-                    Understand deeper
-                  </button>
-                </div>
-              </>
-            ) : null}
-            {evalResult && (
-              <div className="mt-8 text-left">
-                {(() => {
-                  const pill = resultPillAfterCheck(evalResult.result);
-                  return <span className={pill.className}>{pill.label}</span>;
-                })()}
-                {evalResult.result === "correct" || evalResult.result === "typo" ? null : (
-                  <>
-                    <div className="mt-3 rounded-xl bg-slate-50 p-3">
-                      <DiffLine
-                        label="You wrote:"
-                        segments={highlightDiffUser(submittedAnswer, expectedEnglish)}
-                      />
-                      <div className="mt-3">
-                        <DiffLine
-                          label="Correct answer:"
-                          segments={highlightDiffCorrect(submittedAnswer, expectedEnglish)}
-                        />
-                      </div>
-                    </div>
-                    <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-left">
-                      <p className="mb-2 text-xs uppercase tracking-widest text-amber-600">REMEMBER IT</p>
-                      {postEvalUnderstand.status === "loading" ? (
-                        <div className="space-y-2" aria-busy>
-                          <div className="h-3 w-[85%] animate-pulse rounded bg-amber-100/80" />
-                          <div className="h-3 w-full animate-pulse rounded bg-amber-100/80" />
-                          <div className="h-3 w-[70%] animate-pulse rounded bg-amber-100/80" />
-                        </div>
-                      ) : postEvalUnderstand.status === "ok" ? (
-                        <p className="text-sm leading-relaxed text-amber-950">{postEvalUnderstand.paragraph}</p>
-                      ) : postEvalUnderstand.status === "error" ? (
-                        <p className="text-sm text-amber-900">{postEvalUnderstand.message}</p>
-                      ) : null}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+            <p className="mt-2 text-center text-[12px] font-bold uppercase tracking-[0.08em] text-teal-300">
+              {wordMetaLine}
+            </p>
           </div>
+
+          {!evalResult && prefetchHookText ? (
+            <div className="mt-6 rounded-[12px] bg-[rgba(127,255,95,0.1)] px-4 py-[14px] text-left text-[14px] font-semibold text-lime-300">
+              <span aria-hidden>💡 </span>
+              {prefetchHookText}
+            </div>
+          ) : null}
+
+          {!evalResult ? (
+            <>
+              <input
+                ref={inputRef}
+                key={current.word_id}
+                type="text"
+                value={typedAnswer}
+                onChange={(e) => setTypedAnswer(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    void submitCheck();
+                  }
+                }}
+                placeholder="Type the translation..."
+                autoFocus
+                className="mt-8 w-full rounded-[14px] border border-teal-400 bg-teal-850 px-[15px] py-[13px] text-[15px] font-semibold text-[#e8f5f2] outline-none placeholder:text-teal-300 focus:border-[1.5px] focus:border-lime-300"
+              />
+              {checkLoading ? (
+                <p className="mt-2 text-center text-xs text-teal-300">Checking...</p>
+              ) : null}
+              {!evalResult && revealState === "hidden" ? (
+                <p className="mt-2 text-center text-xs text-teal-300">Tap the word for a first-letter hint</p>
+              ) : null}
+              {revealState === "first_letter" ? (
+                <p className="mt-2 text-center text-[13px] font-medium text-teal-200">
+                  Starts with {firstLetterOfAnswer || "…"}
+                </p>
+              ) : null}
+            </>
+          ) : null}
+
+          {evalResult ? (
+            <div className="mt-6">
+              <div className="my-4 border-t border-teal-400/40" />
+              <div className="text-center">
+                <p className="text-[28px] font-extrabold text-lime-300">{expectedEnglish}</p>
+                <p className="mt-1 text-center text-[13px] text-muted">{answerSubtitleLine}</p>
+              </div>
+
+              {evalCorrect ? (
+                <div className="mt-4 rounded-[12px] bg-[rgba(127,255,95,0.1)] px-4 py-[13px] text-center text-[15px] font-bold text-lime-300">
+                  ✓ Correct
+                </div>
+              ) : null}
+
+              {evalNeedsWarning ? (
+                <div className="mt-4 rounded-[12px] bg-[rgba(255,209,102,0.12)] px-4 py-[13px] text-center text-[15px] font-bold text-[#ffd166]">
+                  <span>⚠ Not quite — you answered </span>
+                  <span className="font-bold italic">&quot;{submittedAnswer}&quot;</span>
+                </div>
+              ) : null}
+
+              {evalNeedsWarning &&
+              (postEvalUnderstand.status === "loading" ||
+                postEvalUnderstand.status === "ok" ||
+                postEvalUnderstand.status === "error") ? (
+                <div className="mt-4 rounded-[12px] bg-[rgba(127,255,95,0.1)] px-4 py-[14px] text-left text-[14px] font-semibold text-lime-300">
+                  <span aria-hidden>💡 </span>
+                  {postEvalUnderstand.status === "loading" ? (
+                    <span className="text-lime-300/80">Loading tip…</span>
+                  ) : postEvalUnderstand.status === "ok" ? (
+                    postEvalUnderstand.paragraph
+                  ) : (
+                    <span className="text-lime-300/90">{postEvalUnderstand.message}</span>
+                  )}
+                </div>
+              ) : null}
+
+              {evalResult.result === "equivalent" && evalResult.message.trim() && !evalNeedsWarning ? (
+                <div className="mt-3 rounded-[12px] bg-[rgba(127,255,95,0.1)] px-4 py-[13px] text-center text-[14px] font-semibold italic text-lime-300">
+                  {evalResult.message}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </main>
 
       {!understandOpen ? (
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-slate-100 bg-white px-4 py-4">
-          <div className="mx-auto max-w-2xl">
-            {!evalResult ? (
-              <button
-                type="button"
-                disabled={checkLoading}
-                onClick={() => void submitCheck()}
-                className="w-full rounded-2xl bg-[#2D6A4F] py-3 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {checkLoading ? "Checking…" : "Check"}
-              </button>
-            ) : (
-              <button
-                type="button"
-                disabled={srsLoading}
-                onClick={() => void handleContinueAfterEval()}
-                className="w-full rounded-2xl bg-[#2D6A4F] py-3 text-sm font-semibold text-white disabled:opacity-50"
-              >
-                {srsLoading ? "Saving…" : "Continue"}
-              </button>
-            )}
-          </div>
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-50 mx-5 mb-8">
+          <button
+            type="button"
+            disabled={checkLoading || srsLoading}
+            onClick={() => (!evalResult ? void submitCheck() : void handleContinueAfterEval())}
+            className="pointer-events-auto w-full rounded-pill bg-lime-300 py-[14px] px-7 text-[15px] font-extrabold text-lime-700 shadow-lg disabled:opacity-50"
+          >
+            {!evalResult ? "Check" : "Next"}
+          </button>
         </div>
       ) : null}
 
@@ -661,37 +710,29 @@ export default function VocabularyTypingDeck({
           onClick={() => !understandLoading && setUnderstandOpen(false)}
         >
           <div
-            className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-y-auto rounded-t-3xl bg-white p-6 shadow-xl"
+            className="absolute bottom-0 left-0 right-0 max-h-[88vh] overflow-y-auto rounded-t-3xl border-t border-teal-400 bg-teal-800 p-6 text-[#e8f5f2] shadow-xl"
             role="dialog"
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-slate-200" aria-hidden />
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-teal-600" aria-hidden />
             {understandLoading ? (
               <div className="space-y-6">
                 <div>
-                  <div className="mb-2 h-3 w-24 animate-pulse rounded bg-amber-100" />
-                  <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
-                  <div className="mt-2 h-4 w-[85%] animate-pulse rounded bg-slate-100" />
-                </div>
-                <div>
-                  <div className="mb-2 h-3 w-20 animate-pulse rounded bg-blue-100" />
-                  <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
-                </div>
-                <div>
-                  <div className="mb-2 h-3 w-36 animate-pulse rounded bg-emerald-100" />
-                  <div className="h-4 w-full animate-pulse rounded bg-slate-100" />
+                  <div className="mb-2 h-3 w-24 animate-pulse rounded bg-lime-300/10" />
+                  <div className="h-4 w-full animate-pulse rounded bg-teal-850" />
+                  <div className="mt-2 h-4 w-[85%] animate-pulse rounded bg-teal-850" />
                 </div>
               </div>
             ) : understandData ? (
               <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-widest text-amber-600">Memory hook</p>
-                <p className="text-sm leading-relaxed text-slate-700">{understandData.hook}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-teal-300">Memory hook</p>
+                <p className="text-sm font-semibold leading-relaxed text-teal-100">{understandData.hook}</p>
               </div>
             ) : null}
             <button
               type="button"
-              className="mt-8 w-full rounded-2xl bg-[#2D6A4F] py-3 text-sm font-semibold text-white"
+              className="mt-8 w-full rounded-pill bg-lime-300 py-[14px] text-[15px] font-extrabold text-lime-700"
               onClick={() => setUnderstandOpen(false)}
             >
               Got it

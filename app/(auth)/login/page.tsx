@@ -5,7 +5,9 @@ import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
+
+const inputClass =
+  "w-full rounded-xl border border-teal-400/30 bg-teal-850 px-3 py-3 text-sm text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -56,26 +58,26 @@ export default function LoginScreen() {
     const onboardingComplete = (knownRows ?? []).length > 0;
     if (!onboardingComplete) {
       setLoading(false);
-      router.push("/onboarding");
+      router.push("/onboarding/1");
       return;
     }
 
     setLoading(false);
-    router.push("/dashboard");
+    router.push("/learn");
   };
 
   return (
-    <main className="min-h-screen bg-background flex items-start justify-center">
-      <div className="w-full max-w-[375px] bg-card">
-        <div className="pt-12 pb-8 px-6 text-center">
-          <h1 className="font-serif text-2xl text-[#2D6A4F] font-normal">Bridgr</h1>
-          <h2 className="font-serif text-2xl text-foreground mt-8">Welcome back</h2>
-          <p className="text-sm text-muted-foreground mt-2">Continue your language journey</p>
+    <main className="flex min-h-screen items-start justify-center bg-teal-900">
+      <div className="w-full max-w-[375px] rounded-xl border border-teal-400/30 bg-teal-800">
+        <div className="px-6 pb-8 pt-12 text-center">
+          <h1 className="font-sans text-2xl font-extrabold text-lime-300">Bridgr</h1>
+          <h2 className="mt-8 font-sans text-2xl font-extrabold text-white">Welcome back</h2>
+          <p className="mt-2 text-sm text-teal-200">Continue your language journey</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 mt-8">
+        <form onSubmit={handleSubmit} className="mt-8 px-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="email" className="mb-2 block text-sm font-bold text-white">
               Email
             </label>
             <input
@@ -85,12 +87,12 @@ export default function LoginScreen() {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl h-12 border border-slate-300 px-3 text-sm outline-none ring-primary focus:ring-2"
+              className={inputClass}
             />
           </div>
 
           <div className="mt-4">
-            <label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
+            <label htmlFor="password" className="mb-2 block text-sm font-bold text-white">
               Password
             </label>
             <div className="relative">
@@ -101,12 +103,12 @@ export default function LoginScreen() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl h-12 border border-slate-300 pl-3 pr-11 text-sm outline-none ring-primary focus:ring-2"
+                className={`${inputClass} pl-3 pr-11`}
               />
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-teal-300 hover:text-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -115,33 +117,33 @@ export default function LoginScreen() {
           </div>
 
           <div className="mt-2 text-right">
-            <Link href="/forgot-password" className="text-sm text-primary hover:underline">
+            <Link href="/forgot-password" className="text-sm text-lime-300 hover:underline">
               Forgot your password?
             </Link>
           </div>
 
-          <Button
+          <button
             type="submit"
             disabled={loading}
-            className="mt-6 h-auto min-h-0 border-0 w-full bg-[#2D6A4F] text-white rounded-2xl py-4 font-semibold text-base hover:bg-[#245c42] transition-colors"
+            className="mt-6 w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 transition-opacity disabled:opacity-50"
           >
             {loading ? "Logging in..." : "Log in"}
-          </Button>
+          </button>
 
-          {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
         </form>
 
-        <div className="px-6 mt-6">
+        <div className="mt-6 px-6">
           <div className="relative flex items-center">
-            <div className="flex-grow border-t border-border" />
-            <span className="px-4 text-sm text-muted-foreground bg-card">or</span>
-            <div className="flex-grow border-t border-border" />
+            <div className="flex-grow border-t border-teal-400/30" />
+            <span className="bg-teal-800 px-4 text-sm text-teal-200">or</span>
+            <div className="flex-grow border-t border-teal-400/30" />
           </div>
         </div>
 
-        <div className="px-6 mt-6 pb-12 text-center">
-          <p className="text-sm text-muted-foreground">Don&apos;t have an account?</p>
-          <Link href="/signup" className="inline-block mt-1 text-primary font-semibold hover:underline">
+        <div className="mt-6 px-6 pb-12 text-center">
+          <p className="text-sm text-teal-200">Don&apos;t have an account?</p>
+          <Link href="/signup" className="mt-1 inline-block text-sm font-extrabold text-lime-300 hover:underline">
             Create a free account
           </Link>
         </div>

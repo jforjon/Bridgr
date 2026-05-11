@@ -4,19 +4,19 @@ import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 
 type FieldErrors = {
-  name?: string;
   email?: string;
   password?: string;
   confirmPassword?: string;
 };
 
+const inputBase =
+  "w-full rounded-xl border bg-teal-850 px-4 py-3 text-sm text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
+
 export default function SignUpPage() {
   const router = useRouter();
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -31,9 +31,6 @@ export default function SignUpPage() {
     setError("");
 
     const nextErrors: FieldErrors = {};
-    if (!name.trim()) {
-      nextErrors.name = "Please enter your name";
-    }
     if (!email.trim()) {
       nextErrors.email = "Please enter your email";
     }
@@ -53,8 +50,7 @@ export default function SignUpPage() {
     const supabase = createClient();
     const { data, error: signUpError } = await supabase.auth.signUp({
       email,
-      password,
-      options: { data: { name: name.trim() } }
+      password
     });
     setLoading(false);
 
@@ -64,7 +60,7 @@ export default function SignUpPage() {
     }
 
     if (data.user) {
-      router.push("/onboarding");
+      router.push("/onboarding/1");
       return;
     }
 
@@ -72,41 +68,19 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="min-h-screen bg-background flex justify-center">
-      <div className="w-full max-w-[375px]">
-        <section className="pt-12 pb-8 px-6 text-center">
-          <h1 className="font-serif text-2xl text-[#2D6A4F] font-normal">Bridgr</h1>
-          <h2 className="font-serif text-2xl text-foreground mt-8 text-balance">
+    <main className="flex min-h-screen justify-center bg-teal-900">
+      <div className="w-full max-w-[375px] rounded-xl border border-teal-400/30 bg-teal-800">
+        <section className="px-6 pb-8 pt-12 text-center">
+          <h1 className="font-sans text-2xl font-extrabold text-lime-300">Bridgr</h1>
+          <h2 className="mt-8 text-balance font-sans text-2xl font-extrabold text-white">
             Create your account
           </h2>
-          <p className="text-sm text-muted-foreground mt-2">Start learning smarter today</p>
+          <p className="mt-2 text-sm text-teal-200">Start learning smarter today</p>
         </section>
 
-        <form onSubmit={handleSubmit} className="px-6 mt-8">
+        <form onSubmit={handleSubmit} className="mt-8 px-6">
           <div>
-            <label htmlFor="name" className="text-foreground text-sm font-medium">
-              Your name
-            </label>
-            <input
-              id="name"
-              type="text"
-              placeholder="Jonathan"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value);
-                if (fieldErrors.name) {
-                  setFieldErrors((current) => ({ ...current, name: undefined }));
-                }
-              }}
-              className={`mt-1.5 w-full rounded-xl border bg-card h-12 px-4 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
-                fieldErrors.name ? "border-red-500" : "border-input"
-              }`}
-            />
-            {fieldErrors.name ? <p className="mt-1 text-sm text-red-600">{fieldErrors.name}</p> : null}
-          </div>
-
-          <div className="mt-4">
-            <label htmlFor="email" className="text-foreground text-sm font-medium">
+            <label htmlFor="email" className="text-sm font-bold text-white">
               Email
             </label>
             <input
@@ -120,15 +94,13 @@ export default function SignUpPage() {
                   setFieldErrors((current) => ({ ...current, email: undefined }));
                 }
               }}
-              className={`mt-1.5 w-full rounded-xl border bg-card h-12 px-4 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
-                fieldErrors.email ? "border-red-500" : "border-input"
-              }`}
+              className={`${inputBase} mt-1.5 ${fieldErrors.email ? "border-red-500" : "border-teal-400/30"}`}
             />
-            {fieldErrors.email ? <p className="mt-1 text-sm text-red-600">{fieldErrors.email}</p> : null}
+            {fieldErrors.email ? <p className="mt-1 text-sm text-red-400">{fieldErrors.email}</p> : null}
           </div>
 
           <div className="mt-4">
-            <label htmlFor="password" className="text-foreground text-sm font-medium">
+            <label htmlFor="password" className="text-sm font-bold text-white">
               Password
             </label>
             <div className="relative mt-1.5">
@@ -143,26 +115,24 @@ export default function SignUpPage() {
                     setFieldErrors((current) => ({ ...current, password: undefined }));
                   }
                 }}
-                className={`w-full rounded-xl border bg-card h-12 pl-4 pr-11 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
-                  fieldErrors.password ? "border-red-500" : "border-input"
-                }`}
+                className={`${inputBase} pl-4 pr-11 ${fieldErrors.password ? "border-red-500" : "border-teal-400/30"}`}
               />
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-teal-300 hover:text-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             {fieldErrors.password ? (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.password}</p>
+              <p className="mt-1 text-sm text-red-400">{fieldErrors.password}</p>
             ) : null}
           </div>
 
           <div className="mt-4">
-            <label htmlFor="confirmPassword" className="text-foreground text-sm font-medium">
+            <label htmlFor="confirmPassword" className="text-sm font-bold text-white">
               Confirm password
             </label>
             <div className="relative mt-1.5">
@@ -177,40 +147,40 @@ export default function SignUpPage() {
                     setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
                   }
                 }}
-                className={`w-full rounded-xl border bg-card h-12 pl-4 pr-11 text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F] ${
-                  fieldErrors.confirmPassword ? "border-red-500" : "border-input"
+                className={`${inputBase} pl-4 pr-11 ${
+                  fieldErrors.confirmPassword ? "border-red-500" : "border-teal-400/30"
                 }`}
               />
               <button
                 type="button"
                 aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-slate-400 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2D6A4F]"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-teal-300 hover:text-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             {fieldErrors.confirmPassword ? (
-              <p className="mt-1 text-sm text-red-600">{fieldErrors.confirmPassword}</p>
+              <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmPassword}</p>
             ) : null}
           </div>
 
           <div className="mt-6">
-            <Button
+            <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#2D6A4F] hover:bg-[#245840] text-white rounded-2xl py-6 text-base font-semibold"
+              className="w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 disabled:opacity-50"
             >
               {loading ? "Creating account..." : "Create account"}
-            </Button>
+            </button>
           </div>
 
-          {error ? <p className="mt-3 text-sm text-red-600">{error}</p> : null}
+          {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
         </form>
 
-        <section className="px-6 mt-6 pb-12 text-center">
-          <p className="text-muted-foreground text-sm">Already have an account?</p>
-          <Link href="/login" className="block mt-1 text-[#2D6A4F] font-semibold text-sm hover:underline">
+        <section className="mt-6 px-6 pb-12 text-center">
+          <p className="text-sm text-teal-200">Already have an account?</p>
+          <Link href="/login" className="mt-1 block text-sm font-extrabold text-lime-300 hover:underline">
             Log in
           </Link>
         </section>

@@ -2,21 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { X } from "lucide-react";
+import { IconBooks, IconFlame, IconStar, IconWorld } from "@tabler/icons-react";
+import { Settings, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
 import type { KnownLanguage, LearningLanguage } from "@/types";
 
 interface ProfileScreenClientProps {
   userId: string;
   initialName: string;
   email: string;
+  nativeLanguageCode: string | null;
+  nativeLanguageName: string | null;
   knownLanguages: KnownLanguage[];
   learningLanguages: LearningLanguage[];
   wordsLearned: number;
-  streak: number;
+  weeklyStreak: number;
+  bestWeeklyStreak: number;
+  achievementsCount: number;
 }
 
 function getInitials(name: string) {
@@ -36,33 +40,33 @@ function getProficiencyBadgeClass(proficiency: string): string {
           ? "C1"
           : proficiency;
   if (level === "A1" || level === "A2") {
-    return "border border-blue-200 bg-blue-50 text-blue-600";
+    return "border border-teal-400/30 bg-teal-850 text-teal-200";
   }
   if (level === "B1" || level === "B2") {
-    return "border border-amber-200 bg-amber-50 text-amber-600";
+    return "border border-amber/20 bg-amber/10 text-amber";
   }
   if (level === "C1" || level === "C2") {
-    return "border border-green-200 bg-green-50 text-green-700";
+    return "border border-lime-300/20 bg-lime-300/10 text-lime-300";
   }
-  return "border border-slate-200 bg-slate-100 text-slate-600";
+  return "border border-teal-400/30 bg-teal-850 text-teal-200";
 }
 
 export default function ProfileScreenClient({
   userId,
   initialName,
   email,
+  nativeLanguageCode,
+  nativeLanguageName,
   knownLanguages,
   learningLanguages,
   wordsLearned,
-  streak
+  weeklyStreak,
+  bestWeeklyStreak,
+  achievementsCount
 }: ProfileScreenClientProps) {
   const router = useRouter();
   const supabase = createClient();
   const [name, setName] = useState(initialName);
-  const [editingName, setEditingName] = useState(false);
-  const [draftName, setDraftName] = useState(initialName);
-  const [savingName, setSavingName] = useState(false);
-  const [savedName, setSavedName] = useState(false);
   const [error, setError] = useState("");
   const [learningList, setLearningList] = useState<LearningLanguage[]>(learningLanguages);
   const [removeTarget, setRemoveTarget] = useState<LearningLanguage | null>(null);
@@ -100,42 +104,6 @@ export default function ProfileScreenClient({
     ]);
   }, []);
 
-  useEffect(() => {
-    if (!savedName) return;
-    const timeout = window.setTimeout(() => setSavedName(false), 2000);
-    return () => window.clearTimeout(timeout);
-  }, [savedName]);
-
-  const saveName = async () => {
-    const trimmed = draftName.trim();
-    if (!trimmed) {
-      setError("Please enter your name");
-      return;
-    }
-
-    setError("");
-    setSavingName(true);
-    const { error: updateError } = await supabase
-      .from("profiles")
-      .update({ name: trimmed })
-      .eq("id", userId);
-    setSavingName(false);
-
-    if (updateError) {
-      setError(updateError.message);
-      return;
-    }
-
-    setName(trimmed);
-    setEditingName(false);
-    setSavedName(true);
-  };
-
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    router.push("/");
-  };
-
   const confirmRemoveLanguage = async () => {
     if (!removeTarget) return;
     setRemoving(true);
@@ -156,98 +124,109 @@ export default function ProfileScreenClient({
   };
 
   const hasLearning = learningList.length > 0;
+  const initials = getInitials(name || email || "?");
+  const nativeNameTrimmed = nativeLanguageName?.trim() ?? "";
+  const nativeFlagFromMap = nativeLanguageCode
+    ? languageFlagsByCode.get(nativeLanguageCode)
+    : undefined;
 
   return (
-    <main className="pb-28">
-      <header className="pt-8">
-        <h1 className="font-serif text-2xl text-slate-900">Profile</h1>
+    <main className="min-h-screen bg-teal-900 pb-28">
+      <header className="flex items-center justify-between px-5 pt-8">
+        <h1 className="font-sans text-2xl font-extrabold text-white">Profile</h1>
+        <Link
+          href="/settings"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-teal-400/30 bg-teal-800 text-teal-200"
+          aria-label="Open settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
       </header>
 
-      <section className="mt-8 text-center">
-        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#2D6A4F]">
-          <span className="font-serif text-2xl text-white">{getInitials(name)}</span>
+      <section className="mt-6 px-5 text-center">
+        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-teal-600">
+          <span className="font-sans text-2xl font-extrabold text-white">{initials}</span>
         </div>
-        <h2 className="mt-4 font-serif text-2xl text-slate-900">{name || "No name"}</h2>
-        <p className="mt-1 text-sm text-slate-500">{email}</p>
-      </section>
-
-      <section className="mt-6 rounded-2xl border border-slate-100 bg-white p-5">
-        <p className="mb-2 text-xs uppercase tracking-widest text-slate-500">Name</p>
-        {!editingName ? (
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-base font-medium text-slate-900">{name || "Not set"}</p>
-            <button
-              type="button"
-              onClick={() => {
-                setDraftName(name);
-                setEditingName(true);
-                setError("");
-              }}
-              className="text-sm text-[#2D6A4F]"
-            >
-              Edit
-            </button>
-          </div>
-        ) : (
-          <div>
-            <input
-              type="text"
-              value={draftName}
-              onChange={(event) => setDraftName(event.target.value)}
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none ring-primary focus:ring-2"
-            />
-            <div className="mt-3 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  setDraftName(name);
-                  setEditingName(false);
-                  setError("");
-                }}
-                className="text-sm text-slate-500"
-                disabled={savingName}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => void saveName()}
-                className="text-sm text-[#2D6A4F]"
-                disabled={savingName}
-              >
-                {savingName ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        )}
-        {savedName ? <p className="mt-2 text-sm text-[#2D6A4F]">Saved</p> : null}
-        {error ? <p className="mt-2 text-sm text-red-600">{error}</p> : null}
-      </section>
-
-      <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
-        <p className="mb-3 text-xs uppercase tracking-widest text-slate-500">
-          Languages I&apos;m learning
+        <h2 className="mt-3 font-sans text-2xl font-extrabold text-white">{name || "No name"}</h2>
+        <p className="mt-1 flex items-center justify-center gap-2 text-sm text-teal-200">
+          {!nativeNameTrimmed ? (
+            <>
+              <IconWorld size={16} className="shrink-0 text-teal-300" stroke={1.75} aria-hidden />
+              <span>Native language not set</span>
+            </>
+          ) : (
+            <>
+              {nativeFlagFromMap ? (
+                <span className="text-base leading-none" aria-hidden>
+                  {nativeFlagFromMap}
+                </span>
+              ) : (
+                <IconWorld size={16} className="shrink-0 text-teal-300" stroke={1.75} aria-hidden />
+              )}
+              <span>{nativeNameTrimmed}</span>
+            </>
+          )}
         </p>
+      </section>
+
+      <section className="mt-8 px-5">
+        <h3 className="mb-4 font-sans text-xl font-extrabold text-white">Achievements</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-4 text-center">
+            <div className="flex justify-center">
+              <IconFlame size={28} className="text-amber" stroke={1.75} aria-hidden />
+            </div>
+            <p className="mt-2 font-sans text-2xl font-extrabold text-white">{weeklyStreak}</p>
+            <p className="mt-1 text-xs text-teal-300">week streak</p>
+          </div>
+          <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-4 text-center">
+            <div className="flex justify-center">
+              <IconStar size={28} className="text-amber" stroke={1.75} aria-hidden />
+            </div>
+            <p className="mt-2 font-sans text-2xl font-extrabold text-white">{bestWeeklyStreak}</p>
+            <p className="mt-1 text-xs text-teal-300">week best</p>
+          </div>
+          <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-4 text-center">
+            <div className="flex justify-center">
+              <IconBooks size={28} className="text-lime-300" stroke={1.75} aria-hidden />
+            </div>
+            <p className="mt-2 font-sans text-2xl font-extrabold text-white">{wordsLearned}</p>
+            <p className="mt-1 text-xs text-teal-300">words</p>
+          </div>
+          <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-4 text-center">
+            <div className="flex justify-center">
+              <IconWorld size={28} className="text-lime-300" stroke={1.75} aria-hidden />
+            </div>
+            <p className="mt-2 font-sans text-2xl font-extrabold text-white">{learningList.length}</p>
+            <p className="mt-1 text-xs text-teal-300">languages</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-8 px-5">
+        <p className="mb-3 text-xs font-bold uppercase tracking-wider text-teal-300">Learning</p>
 
         {!hasLearning ? (
-          <div>
-            <p className="text-sm text-slate-500">No languages yet</p>
-            <Link href="/languages/add" className="mt-2 inline-block text-sm font-medium text-[#2D6A4F]">
+          <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-5">
+            <p className="text-sm text-teal-200">No learning languages yet.</p>
+            <Link href="/onboarding/4" className="mt-2 inline-block text-sm font-extrabold text-lime-300">
               Add a language
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2 rounded-xl border border-teal-400/30 bg-teal-800 p-4">
             {learningList.map((language) => (
               <div
                 key={language.id}
-                className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3 last:border-b-0 last:pb-0"
+                className="flex items-center justify-between gap-3 border-b border-teal-400/20 pb-3 last:border-b-0 last:pb-0"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-2">
-                  <span className="text-xl shrink-0">
-                    {languageFlagsByCode.get(language.language_code) ?? "🌍"}
+                  <span className="flex shrink-0 items-center text-xl leading-none">
+                    {languageFlagsByCode.get(language.language_code) ?? (
+                      <IconWorld size={20} className="text-teal-300" stroke={1.75} aria-hidden />
+                    )}
                   </span>
-                  <span className="min-w-0 truncate font-medium text-slate-900">{language.language_name}</span>
+                  <span className="min-w-0 truncate font-bold text-white">{language.language_name}</span>
                   <span
                     className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${getProficiencyBadgeClass(
                       language.cefr_level
@@ -259,18 +238,18 @@ export default function ProfileScreenClient({
                 <button
                   type="button"
                   onClick={() => setRemoveTarget(language)}
-                  className="shrink-0 rounded-lg p-1 text-slate-300 hover:text-red-400"
+                  className="shrink-0 rounded-lg p-1 text-teal-400 hover:text-red-400"
                   aria-label={`Remove ${language.language_name}`}
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
             ))}
-            <Link href="/languages/add" className="mt-2 inline-block text-sm font-medium text-[#2D6A4F]">
-              Add a language
-            </Link>
           </div>
         )}
+        <Link href="/onboarding/4" className="mt-3 inline-block text-sm font-extrabold text-lime-300">
+          + Add a language
+        </Link>
       </section>
 
       {removeTarget ? (
@@ -280,16 +259,16 @@ export default function ProfileScreenClient({
           onClick={() => !removing && setRemoveTarget(null)}
         >
           <div
-            className="mx-auto max-w-sm rounded-2xl bg-white p-6 shadow-xl"
+            className="mx-auto max-w-sm rounded-xl border border-teal-400/30 bg-teal-800 p-6 shadow-xl"
             role="dialog"
             aria-modal="true"
             aria-labelledby="remove-lang-title"
             onClick={(e) => e.stopPropagation()}
           >
-            <h2 id="remove-lang-title" className="font-serif text-xl text-[#0F1A14]">
+            <h2 id="remove-lang-title" className="font-sans text-xl font-extrabold text-white">
               Remove {removeTarget.language_name}?
             </h2>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-teal-200">
               Your progress will be saved but this language will be removed from your active courses.
             </p>
             <div className="mt-6 flex gap-3">
@@ -297,7 +276,7 @@ export default function ProfileScreenClient({
                 type="button"
                 disabled={removing}
                 onClick={() => setRemoveTarget(null)}
-                className="flex-1 rounded-xl border border-slate-200 px-5 py-2.5 text-sm font-medium text-slate-600 disabled:opacity-50"
+                className="flex-1 rounded-full border border-teal-400/30 px-5 py-2.5 text-sm font-extrabold text-teal-200 disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -305,7 +284,7 @@ export default function ProfileScreenClient({
                 type="button"
                 disabled={removing}
                 onClick={() => void confirmRemoveLanguage()}
-                className="flex-1 rounded-xl bg-red-500 px-5 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                className="flex-1 rounded-full bg-red-600 px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-50"
               >
                 {removing ? "Removing…" : "Remove"}
               </button>
@@ -314,27 +293,29 @@ export default function ProfileScreenClient({
         </div>
       ) : null}
 
-      <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
+      <section className="mt-6 px-5">
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-xs uppercase tracking-widest text-slate-500">Languages I speak</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-teal-300">I speak</p>
           <button
             type="button"
-            onClick={() => router.push("/onboarding")}
-            className="text-sm text-[#2D6A4F]"
+            onClick={() => router.push("/onboarding/3")}
+            className="text-sm font-extrabold text-lime-300"
           >
             Edit
           </button>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2 rounded-xl border border-teal-400/30 bg-teal-800 p-4">
           {knownLanguages.length > 0 ? (
             knownLanguages.map((language) => (
               <div key={language.id} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xl">
-                    {languageFlagsByCode.get(language.language_code) ?? "🌍"}
+                  <span className="flex items-center text-xl leading-none">
+                    {languageFlagsByCode.get(language.language_code) ?? (
+                      <IconWorld size={20} className="text-teal-300" stroke={1.75} aria-hidden />
+                    )}
                   </span>
-                  <span className="text-sm text-slate-800">{language.language_name}</span>
+                  <span className="text-sm font-medium text-white">{language.language_name}</span>
                 </div>
                 <span
                   className={`rounded-full px-3 py-1 text-xs font-medium ${getProficiencyBadgeClass(
@@ -346,31 +327,14 @@ export default function ProfileScreenClient({
               </div>
             ))
           ) : (
-            <p className="text-sm text-slate-500">No known languages set</p>
+            <p className="text-sm text-teal-200">No known languages set</p>
           )}
         </div>
       </section>
 
-      <section className="mt-4 rounded-2xl border border-slate-100 bg-white p-5">
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm text-slate-600">Words learned</span>
-          <span className="text-sm font-semibold text-slate-900">{wordsLearned}</span>
-        </div>
-        <div className="h-px bg-slate-100" />
-        <div className="flex items-center justify-between py-2">
-          <span className="text-sm text-slate-600">Day streak</span>
-          <span className="text-sm font-semibold text-slate-900">{streak}</span>
-        </div>
-      </section>
-
-      <Button
-        type="button"
-        onClick={() => void signOut()}
-        variant="outline"
-        className="mt-6 w-full rounded-2xl border-slate-200 py-4 text-slate-600 font-medium"
-      >
-        Sign out
-      </Button>
+      {achievementsCount === 0 ? (
+        <p className="mt-4 px-5 text-xs text-teal-300">No achievement rows yet.</p>
+      ) : null}
 
       <BottomNav activeTab="profile" hasLearningLanguage={hasLearning} />
     </main>

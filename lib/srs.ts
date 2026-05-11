@@ -67,9 +67,11 @@ export async function getDueCards(
 ): Promise<DueFlashcard[]> {
   const today = new Date().toISOString().split("T")[0];
 
+  console.log("[getDueCards] call", { userId, limit, today });
+
   const { data, error } = await supabaseClient
     .from("flashcards")
-    .select("*, words(*)")
+    .select("*, word:words!inner(*)")
     .eq("user_id", userId)
     .lte("next_review_date", today)
     .order("next_review_date", { ascending: true })
@@ -79,5 +81,16 @@ export async function getDueCards(
     throw error;
   }
 
-  return (data ?? []) as DueFlashcard[];
+  console.log("[getDueCards] raw response", data);
+
+  const seen = new Set<string>();
+  const unique = ((data ?? []) as Array<Flashcard & { word?: Word }>).filter((row) => {
+    if (seen.has(row.word_id)) return false;
+    seen.add(row.word_id);
+    return true;
+  });
+
+  const result = unique.map((row) => ({ ...(row as Flashcard), words: row.word as Word })) as DueFlashcard[];
+  console.log("[getDueCards] returned", result);
+  return result;
 }

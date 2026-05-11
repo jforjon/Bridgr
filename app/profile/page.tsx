@@ -13,14 +13,15 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const [
-    { data: profileData },
-    { data: knownLanguageData },
-    { data: learningLanguageData },
-    { count: flashcardCount },
-    { data: progressRows }
-  ] = await Promise.all([
-    supabase.from("profiles").select("name,email").eq("id", user.id).maybeSingle(),
+  const [{ data: profileData }, { data: knownLanguageData }, { data: learningLanguageData }, { count: flashcardCount }, { data: achievementsData }] =
+    await Promise.all([
+    supabase
+      .from("profiles")
+      .select(
+        "name,email,native_language_code,native_language_name,weekly_streak,best_weekly_streak"
+      )
+      .eq("id", user.id)
+      .maybeSingle(),
     supabase.from("known_languages").select("*").eq("user_id", user.id),
     supabase
       .from("learning_languages")
@@ -31,25 +32,25 @@ export default async function ProfilePage() {
       .from("flashcards")
       .select("*", { head: true, count: "exact" })
       .eq("user_id", user.id),
-    supabase.from("lesson_progress").select("streak_days").eq("user_id", user.id)
+    supabase.from("achievements").select("*").eq("user_id", user.id)
   ]);
 
   const knownLanguages = (knownLanguageData ?? []) as KnownLanguage[];
   const learningLanguages = (learningLanguageData ?? []) as LearningLanguage[];
-  const streak = (progressRows ?? []).reduce(
-    (max, row) => Math.max(max, row.streak_days ?? 0),
-    0
-  );
 
   return (
     <ProfileScreenClient
       userId={user.id}
       initialName={(profileData?.name ?? "").trim()}
       email={profileData?.email ?? ""}
+      nativeLanguageCode={profileData?.native_language_code ?? null}
+      nativeLanguageName={profileData?.native_language_name ?? null}
       knownLanguages={knownLanguages}
       learningLanguages={learningLanguages}
       wordsLearned={flashcardCount ?? 0}
-      streak={streak}
+      weeklyStreak={profileData?.weekly_streak ?? 0}
+      bestWeeklyStreak={profileData?.best_weekly_streak ?? 0}
+      achievementsCount={(achievementsData ?? []).length}
     />
   );
 }

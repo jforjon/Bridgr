@@ -4,11 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
+const EVALUATIONS_CACHE = "evaluations_cache" as const;
+
 const MODEL = "claude-haiku-4-5";
 const MAX_TOKENS = 300;
 
 const SYSTEM_PROMPT =
-  "You are an encouraging language teacher. You evaluate learner answers generously — accepting typos, conjugation variants, and close synonyms. You never make learners feel bad for mistakes. Mistakes are learning opportunities.";
+  "You are a language teacher evaluating typed translations. Be generous with minor typos (1 character off) and accepted synonyms. But NEVER mark as correct if: the user typed the foreign language word itself instead of a translation, the answer has no semantic overlap with the correct translation, or the answer is gibberish. A typo must still resemble the correct answer — not just the question word.";
 
 function sliceJsonObject(text: string): string {
   const first = text.indexOf("{");
@@ -19,10 +21,10 @@ function sliceJsonObject(text: string): string {
   return text.slice(first, last + 1);
 }
 
-type EvaluateResult = "correct" | "typo" | "close" | "wrong";
+type EvaluateResult = "correct" | "typo" | "equivalent" | "close" | "wrong";
 
 function isEvaluateResult(v: unknown): v is EvaluateResult {
-  return v === "correct" || v === "typo" || v === "close" || v === "wrong";
+  return v === "correct" || v === "typo" || v === "equivalent" || v === "close" || v === "wrong";
 }
 
 function normalizeAnswer(s: string): string {
@@ -60,10 +62,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured." }, { status: 500 });
-  }
-
   let body: Record<string, unknown>;
   try {
     body = (await request.json()) as Record<string, unknown>;
@@ -73,6 +71,7 @@ export async function POST(request: Request) {
 
   const word = typeof body.word === "string" ? body.word.trim() : "";
   const typed_answer = typeof body.typed_answer === "string" ? body.typed_answer : "";
+  const typed_trimmed = typed_answer.trim();
   const correct_answer = typeof body.correct_answer === "string" ? body.correct_answer.trim() : "";
   const language_code =
     typeof body.language_code === "string" ? body.language_code.toLowerCase().trim() : "";
@@ -82,6 +81,54 @@ export async function POST(request: Request) {
       { error: "Invalid body: require word, correct_answer, and language_code." },
       { status: 400 }
     );
+  }
+
+  const { data: cached, error: cacheReadErr } = await supabase
+    .from(EVALUATIONS_CACHE)
+    .select("result, message, show_correct")
+    .eq("word", word)
+    .eq("typed_answer", typed_trimmed)
+    .eq("correct_answer", correct_answer)
+    .maybeSingle();
+
+  if (cacheReadErr) {
+    console.error("[evaluate] cache read:", cacheReadErr);
+  } else if (cached && isEvaluateResult(cached.result)) {
+    let result = cached.result;
+    let messageStr =
+      typeof cached.message === "string" && cached.message.trim()
+        ? cached.message.trim()
+        : "Nice try — keep going!";
+
+    const typedNorm = normalizeAnswer(typed_answer);
+    const expectedNorm = normalizeAnswer(correct_answer);
+    if (typedNorm.length > 0 && expectedNorm.length > 0 && typedNorm === expectedNorm) {
+      result = "correct";
+      messageStr = "Correct!";
+    }
+
+    const show_correct = result === "wrong" && cached.show_correct === true;
+
+    const cachedPayload: {
+      result: EvaluateResult;
+      message: string;
+      show_correct: boolean;
+      correct_answer?: string;
+    } = {
+      result,
+      message: messageStr,
+      show_correct
+    };
+
+    if (show_correct) {
+      cachedPayload.correct_answer = correct_answer;
+    }
+
+    return NextResponse.json(cachedPayload);
+  }
+
+  if (!process.env.ANTHROPIC_API_KEY) {
+    return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured." }, { status: 500 });
   }
 
   const knownSummary = formatKnownLanguages(body.known_languages);
@@ -99,16 +146,24 @@ Learner also speaks (for context only): ${knownSummary}
 
 Evaluate and return ONLY valid JSON (double-quoted keys and strings):
 {
-  "result": "correct"|"typo"|"close"|"wrong",
+  "result": "correct"|"typo"|"equivalent"|"close"|"wrong",
   "message": string,
   "show_correct": boolean
 }
 
 Rules:
-- Compare the learner's typed text to the ENGLISH gloss "${correct_answer}". Ignore case and surrounding whitespace. Do NOT ask them to repeat the ${language_code} word unless they clearly answered in the wrong language.
+- IMPORTANT: If typed_answer is the same as or very similar to the word field (the foreign word being tested), mark result as 'wrong' — the user must translate, not echo the word back.
+- Compare the learner's typed text to the ENGLISH gloss "${correct_answer}". Ignore case and surrounding whitespace.
 - If their answer matches the English gloss (exactly or with only trivial punctuation/spacing differences), result MUST be "correct".
-- result must be exactly one of: correct, typo, close, wrong
-- typo: almost the right English, small spelling slip. close: related but not the best gloss. wrong: clearly incorrect or wrong language.
+- Evaluate generously. Accept:
+  - Exact matches (correct)
+  - Typos where the intent is clear (typo)
+  - Semantic equivalents — same meaning, different word (equivalent)
+  - Close attempts with minor errors (close)
+  - Wrong answers (wrong)
+- For "equivalent": write a note explaining if there's any nuance difference the learner should know about. Keep it to 1 sentence.
+  Example: "Both work! Though ciao is more casual than buongiorno."
+- result must be exactly one of: correct, typo, equivalent, close, wrong
 - message: 1-2 sentences, encouraging tone.
 - show_correct: true only if result is "wrong".`;
 
@@ -143,7 +198,7 @@ Rules:
   }
 
   if (!isEvaluateResult(parsed.result)) {
-    return NextResponse.json({ error: "Invalid model output: result must be correct, typo, close, or wrong." }, { status: 502 });
+    return NextResponse.json({ error: "Invalid model output: result must be correct, typo, equivalent, close, or wrong." }, { status: 502 });
   }
 
   let result = parsed.result;
@@ -174,6 +229,22 @@ Rules:
 
   if (show_correct) {
     payload.correct_answer = correct_answer;
+  }
+
+  const { error: cacheInsErr } = await supabase.from(EVALUATIONS_CACHE).upsert(
+    {
+      word,
+      typed_answer: typed_trimmed,
+      correct_answer,
+      result: payload.result,
+      message: payload.message,
+      show_correct: payload.show_correct
+    },
+    { onConflict: "word,typed_answer,correct_answer" }
+  );
+
+  if (cacheInsErr) {
+    console.error("[evaluate] cache upsert:", cacheInsErr);
   }
 
   return NextResponse.json(payload);

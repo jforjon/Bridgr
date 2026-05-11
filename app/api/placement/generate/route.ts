@@ -1,121 +1,102 @@
-import Anthropic from "@anthropic-ai/sdk";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import type { KnownLanguage } from "@/types";
 import { createPlacementSession, type PlacementStoredQuestion } from "@/lib/placement-session-cache";
 
 export const runtime = "nodejs";
 
-const MODEL = "claude-haiku-4-5";
-const MAX_TOKENS = 3000;
-
-const SYSTEM_PROMPT =
-  "You are a CEFR-certified language assessment expert. Generate placement tests that accurately identify learner levels using validated question formats from official CEFR frameworks.";
-
-function sliceJsonObject(text: string): string {
-  const firstBrace = text.indexOf("{");
-  const lastBrace = text.lastIndexOf("}");
-  if (firstBrace === -1 || lastBrace === -1) {
-    throw new Error("No JSON object found in response");
-  }
-  return text.slice(firstBrace, lastBrace + 1);
-}
-
-function isValidQuestion(entry: unknown): entry is PlacementStoredQuestion {
-  if (!entry || typeof entry !== "object") return false;
-  const q = entry as Record<string, unknown>;
-  const type = q.type;
-  const cefr = q.cefr_level;
-  const prompt = q.prompt;
-  const correct = q.correct_answer;
-  const validType =
-    type === "vocabulary" || type === "grammar" || type === "comprehension";
-  const validCefr =
-    cefr === "A1" ||
-    cefr === "A2" ||
-    cefr === "B1" ||
-    cefr === "B2" ||
-    cefr === "C1" ||
-    cefr === "C2";
-  return (
-    validType &&
-    validCefr &&
-    typeof prompt === "string" &&
-    prompt.trim().length > 0 &&
-    typeof correct === "string" &&
-    correct.trim().length > 0
-  );
-}
-
-function parseQuestionsFromResponse(raw: string | null | undefined, label: string): PlacementStoredQuestion[] {
-  if (!raw?.trim()) {
-    console.warn(`[placement/generate] ${label}: empty response`);
-    return [];
-  }
-  try {
-    const jsonStr = sliceJsonObject(raw);
-    const parsed = JSON.parse(jsonStr) as { questions?: unknown };
-    if (!Array.isArray(parsed.questions)) {
-      console.warn(`[placement/generate] ${label}: missing questions array`);
-      return [];
-    }
-    const kept = parsed.questions.filter(isValidQuestion);
-    if (kept.length < parsed.questions.length) {
-      console.warn(
-        `[placement/generate] ${label}: dropped ${parsed.questions.length - kept.length} invalid entries`
-      );
-    }
-    return kept;
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    console.error(`[placement/generate] ${label}: parse error`, message, raw.slice(0, 400));
-    return [];
-  }
-}
-
-function buildPrompt(languageName: string, knownSummary: string): string {
-  return `Generate exactly 10 placement questions (MVP) for ${languageName}.
-Learner's known languages: ${knownSummary}
-
-IMPORTANT: Reference the learner's known languages where helpful (similarities/differences with ${languageName}).
-
-Return ONLY valid JSON (double-quoted keys and strings):
-{
-  "questions": [
-    {
-      "id": string,
-      "type": "vocabulary"|"grammar"|"comprehension",
-      "cefr_level": "A1"|"A2"|"B1"|"B2"|"C1"|"C2",
-      "topic_key": string,
-      "prompt": string,
-      "context": string,
-      "options": array of 4 strings OR null for grammar,
-      "correct_answer": string,
-      "explanation": string
-    }
-  ]
-}
-
-Exact distribution (10 total):
-- 3 vocabulary: one each at A1, A2, B1
-- 3 grammar: one each at A1, A2, B1 (use "options": null for fill-in)
-- 2 comprehension: one at A1, one at A2 (include short "context" passage when needed)
-- 2 harder items: one vocabulary or comprehension at B2, one at C1 (to identify advanced learners)
-
-Order questions roughly from easier to harder. Use "context" as "" when not needed. Vocabulary and multiple-choice: exactly 4 strings in "options". Grammar fill-in: "options": null.
-Include "topic_key" on every question. Do not reveal correct answers in the prompt text.`;
-}
+type DbSection = "vocabulary" | "grammar" | "reading" | "writing";
 
 interface GenerateBody {
   language_code: string;
   language_name: string;
 }
 
-export async function POST(request: Request) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return NextResponse.json({ error: "ANTHROPIC_API_KEY is not configured." }, { status: 500 });
-  }
+type PlacementQuestionClientRow = {
+  id: string;
+  section: string;
+  cefr_level: string;
+  prompt: string;
+  context_text: string | null;
+  options: unknown;
+  order_index: number;
+};
 
+type PlacementQuestionFullRow = PlacementQuestionClientRow & {
+  correct_answer: string;
+};
+
+const ROMANCE_CODES = new Set(["fr", "es", "it", "pt", "ca", "ro"]);
+const GERMANIC_CODES = new Set(["en", "de", "nl", "sv", "da", "no"]);
+const SLAVIC_CODES = new Set(["ru", "pl", "cs", "uk", "bg"]);
+
+function detectProfile(knownLanguageCodes: string[]): "romance" | "germanic" | "slavic" | "other" {
+  for (const code of knownLanguageCodes) {
+    if (ROMANCE_CODES.has(code)) return "romance";
+  }
+  for (const code of knownLanguageCodes) {
+    if (GERMANIC_CODES.has(code)) return "germanic";
+  }
+  for (const code of knownLanguageCodes) {
+    if (SLAVIC_CODES.has(code)) return "slavic";
+  }
+  return "other";
+}
+
+function normalizeOptions(raw: unknown): string[] | null {
+  if (raw == null) return null;
+  if (!Array.isArray(raw)) return null;
+  const strings = raw.filter((x): x is string => typeof x === "string");
+  return strings.length > 0 ? strings : null;
+}
+
+function toStoredQuestion(row: PlacementQuestionFullRow): PlacementStoredQuestion {
+  const section = row.section as DbSection;
+  const type: PlacementStoredQuestion["type"] =
+    section === "vocabulary"
+      ? "vocabulary"
+      : section === "grammar"
+        ? "grammar"
+        : section === "reading"
+          ? "reading"
+          : "writing";
+
+  return {
+    id: row.id,
+    type,
+    cefr_level: row.cefr_level as PlacementStoredQuestion["cefr_level"],
+    topic_key: `${row.section}_${row.cefr_level}`,
+    prompt: row.prompt.trim(),
+    context: row.context_text?.trim() ?? "",
+    options: normalizeOptions(row.options),
+    correct_answer: row.correct_answer.trim(),
+    explanation: ""
+  };
+}
+
+function toClientQuestion(row: PlacementQuestionClientRow): {
+  id: string;
+  section: DbSection;
+  cefr_level: string;
+  prompt: string;
+  context_text: string | null;
+  options: string[] | null;
+  order_index: number;
+  skippable: boolean;
+} {
+  const section = row.section as DbSection;
+  return {
+    id: row.id,
+    section,
+    cefr_level: row.cefr_level,
+    prompt: row.prompt,
+    context_text: row.context_text,
+    options: normalizeOptions(row.options),
+    order_index: row.order_index,
+    skippable: section === "writing"
+  };
+}
+
+export async function POST(request: Request) {
   let body: GenerateBody;
   try {
     body = (await request.json()) as GenerateBody;
@@ -124,12 +105,15 @@ export async function POST(request: Request) {
   }
 
   const { language_code, language_name } = body;
-  if (!language_code || !language_name) {
+  if (!language_code?.trim() || !language_name?.trim()) {
     return NextResponse.json(
       { error: "Invalid body: require language_code and language_name." },
       { status: 400 }
     );
   }
+
+  const code = language_code.toLowerCase().trim();
+  const name = language_name.trim();
 
   const supabase = createClient();
   const {
@@ -140,74 +124,98 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data: knownRows, error: knownError } = await supabase
+  const { data: knownRows } = await supabase
     .from("known_languages")
-    .select("language_name, proficiency")
+    .select("language_code")
     .eq("user_id", user.id);
 
-  if (knownError) {
-    return NextResponse.json({ error: knownError.message }, { status: 500 });
+  const knownCodes = (knownRows ?? []).map((r) => String(r.language_code).toLowerCase());
+  const filtered = knownCodes.filter((c) => c !== code);
+  const learnerProfile = detectProfile(filtered);
+
+  let activeProfile = learnerProfile;
+
+  let { data: clientRows, error: clientErr } = await supabase
+    .from("placement_questions")
+    .select("id, section, cefr_level, prompt, context_text, options, order_index")
+    .eq("language_code", code)
+    .eq("learner_profile", activeProfile)
+    .order("order_index", { ascending: true });
+
+  if (clientErr) {
+    console.error("[placement/generate] client select:", clientErr);
+    return NextResponse.json({ error: clientErr.message }, { status: 500 });
   }
 
-  const known = (knownRows ?? []) as Pick<KnownLanguage, "language_name" | "proficiency">[];
-  const knownSummary =
-    known.length > 0
-      ? known.map((l) => `${l.language_name} (${l.proficiency})`).join(", ")
-      : "None specified";
+  if (!clientRows?.length) {
+    const { data: fallbackRows } = await supabase
+      .from("placement_questions")
+      .select("id, section, cefr_level, prompt, context_text, options, order_index")
+      .eq("language_code", code)
+      .eq("learner_profile", "other")
+      .order("order_index", { ascending: true });
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-
-  let raw: string | null = null;
-  try {
-    const message = await client.messages.create({
-      model: MODEL,
-      max_tokens: MAX_TOKENS,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: "user", content: buildPrompt(language_name, knownSummary) }]
-    });
-    const block = message.content[0];
-    raw = block.type === "text" ? block.text : "";
-    console.log("[placement/generate] raw (first 500 chars):", (raw ?? "").slice(0, 500));
-  } catch (e) {
-    const message = e instanceof Error ? e.message : String(e);
-    console.error("[placement/generate] Anthropic error:", e);
-    return NextResponse.json({ error: message }, { status: 500 });
+    if (fallbackRows?.length) {
+      clientRows = fallbackRows;
+      activeProfile = "other";
+    } else {
+      return NextResponse.json(
+        { error: "No placement questions found for this language. Please try again later." },
+        { status: 404 }
+      );
+    }
   }
 
-  const parsed = parseQuestionsFromResponse(raw, "single_batch");
-  const combined = parsed.slice(0, 10).map((q, index) => ({
-    ...q,
-    id: `q${index + 1}`
-  }));
+  const { data: fullRows, error: fullErr } = await supabase
+    .from("placement_questions")
+    .select("id, section, cefr_level, prompt, context_text, options, correct_answer, order_index")
+    .eq("language_code", code)
+    .eq("learner_profile", activeProfile)
+    .order("order_index", { ascending: true });
 
-  const warnings: string[] = [];
-  if (parsed.length < 10) {
-    warnings.push(`Expected 10 questions, parsed ${parsed.length}.`);
+  if (fullErr) {
+    console.error("[placement/generate] full select:", fullErr);
+    return NextResponse.json({ error: fullErr.message }, { status: 500 });
   }
 
-  if (combined.length === 0) {
+  if (!fullRows?.length || fullRows.length !== clientRows.length) {
     return NextResponse.json(
-      {
-        error: "No questions could be generated. Try again in a moment.",
-        warning: warnings.join(" ")
-      },
-      { status: 503 }
+      { error: "Placement question set is incomplete. Please try again later." },
+      { status: 500 }
     );
   }
 
-  const test_session_id = createPlacementSession({
+  for (let i = 0; i < clientRows.length; i += 1) {
+    if (clientRows[i].id !== fullRows[i].id || clientRows[i].order_index !== fullRows[i].order_index) {
+      return NextResponse.json(
+        { error: "Placement question ordering mismatch. Please try again later." },
+        { status: 500 }
+      );
+    }
+  }
+
+  const requiredSections = new Set(["vocabulary", "grammar", "reading"]);
+  const requiredCount = fullRows.filter((r) => requiredSections.has(r.section)).length;
+  const writingCount = fullRows.filter((r) => r.section === "writing").length;
+  if (requiredCount !== 26 || writingCount !== 4) {
+    console.warn(
+      `[placement/generate] expected 26 required + 4 writing for ${code}, got required=${requiredCount} writing=${writingCount}`
+    );
+  }
+
+  const stored: PlacementStoredQuestion[] = (fullRows as PlacementQuestionFullRow[]).map(toStoredQuestion);
+
+  const test_session_id = await createPlacementSession({
     userId: user.id,
-    language_code,
-    language_name,
-    questions: combined
+    language_code: code,
+    language_name: name,
+    questions: stored
   });
 
-  const questionsForClient = combined.map(({ correct_answer: _omit, ...rest }) => rest);
-  const warning = warnings.length > 0 ? warnings.join(" ") : undefined;
+  const questions = (clientRows as PlacementQuestionClientRow[]).map(toClientQuestion);
 
   return NextResponse.json({
     test_session_id,
-    questions: questionsForClient,
-    ...(warning ? { warning } : {})
+    questions
   });
 }

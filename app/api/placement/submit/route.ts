@@ -10,7 +10,13 @@ import {
 
 export const runtime = "nodejs";
 
-const MODEL = "claude-haiku-4-5";
+const JUDGE_MODEL_GRAMMAR = "claude-haiku-4-5";
+const JUDGE_MAX_TOKENS_GRAMMAR = 200;
+const JUDGE_MODEL_WRITING = "claude-haiku-4-5-20251001";
+const JUDGE_MAX_TOKENS_WRITING = 300;
+
+/** CEFR ladder for placement (cap C1; C2 not used in bank). */
+const PLACEMENT_LEVEL_ORDER: readonly CEFRLevel[] = ["A1", "A2", "B1", "B2", "C1"];
 
 function normalizeAnswer(s: string): string {
   return s.trim().toLowerCase().replace(/\s+/g, " ");
@@ -34,11 +40,14 @@ function resolveLanguageNameForSubmit(code: string): string {
 async function judgeFillIn(
   client: Anthropic,
   question: PlacementStoredQuestion,
-  userAnswer: string
+  userAnswer: string,
+  opts?: { model?: string; maxTokens?: number }
 ): Promise<boolean> {
+  const model = opts?.model ?? JUDGE_MODEL_GRAMMAR;
+  const max_tokens = opts?.maxTokens ?? JUDGE_MAX_TOKENS_GRAMMAR;
   const textBlock = await client.messages.create({
-    model: MODEL,
-    max_tokens: 200,
+    model,
+    max_tokens,
     system:
       'You grade short language-learner answers. Reply ONLY with compact JSON: {"correct":true} or {"correct":false}.',
     messages: [
@@ -64,6 +73,25 @@ Accept if the learner answer has the same meaning; minor spelling/accents/punctu
   } catch {
     return false;
   }
+}
+
+function isAnswerEmpty(raw: string): boolean {
+  return raw.trim() === "";
+}
+
+function placementFromLevelStats(levelStats: Map<CEFRLevel, { correct: number; total: number }>): CEFRLevel {
+  let result: CEFRLevel = "A1";
+  for (const level of PLACEMENT_LEVEL_ORDER) {
+    const s = levelStats.get(level);
+    if (!s || s.total === 0) continue;
+    const passed = s.correct / s.total >= 0.5;
+    if (passed) {
+      result = level;
+    } else {
+      break;
+    }
+  }
+  return result;
 }
 
 interface SubmitTestBody {
@@ -197,7 +225,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = getPlacementSession(test_session_id);
+  const session = await getPlacementSession(test_session_id);
   if (!session || session.userId !== user.id) {
     return NextResponse.json({ error: "Invalid or expired test session." }, { status: 404 });
   }
@@ -205,18 +233,46 @@ export async function POST(request: Request) {
   const answerById = new Map(answers.map((a) => [a.question_id, a.answer ?? ""]));
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  const writingQuestions = session.questions.filter((q) => q.type === "writing");
+  const allWritingSkipped =
+    writingQuestions.length > 0 &&
+    writingQuestions.every((q) => isAnswerEmpty(answerById.get(q.id) ?? ""));
+
   const topicStats = new Map<string, { total: number; correct: number }>();
+  const levelStats = new Map<CEFRLevel, { correct: number; total: number }>();
+
+  const bumpLevelStat = (level: CEFRLevel, ok: boolean) => {
+    const prev = levelStats.get(level) ?? { correct: 0, total: 0 };
+    prev.total += 1;
+    if (ok) prev.correct += 1;
+    levelStats.set(level, prev);
+  };
+
   let correctCount = 0;
   const total = session.questions.length;
 
   for (const question of session.questions) {
     const rawAnswer = answerById.get(question.id) ?? "";
+    const empty = isAnswerEmpty(rawAnswer);
+
     let ok = false;
-    if (isMultipleChoice(question)) {
-      ok = scoreMcq(question, rawAnswer);
+    if (question.type === "writing") {
+      if (allWritingSkipped) {
+        ok = false;
+      } else if (empty) {
+        ok = false;
+      } else {
+        ok = await judgeFillIn(client, question, rawAnswer, {
+          model: JUDGE_MODEL_WRITING,
+          maxTokens: JUDGE_MAX_TOKENS_WRITING
+        });
+      }
+    } else if (isMultipleChoice(question)) {
+      ok = !empty && scoreMcq(question, rawAnswer);
     } else {
-      ok = await judgeFillIn(client, question, rawAnswer);
+      ok = !empty && (await judgeFillIn(client, question, rawAnswer));
     }
+
     if (ok) correctCount += 1;
 
     const topicKey = question.topic_key?.trim() || `${question.type}_${question.cefr_level}`;
@@ -224,6 +280,8 @@ export async function POST(request: Request) {
     prev.total += 1;
     if (ok) prev.correct += 1;
     topicStats.set(topicKey, prev);
+
+    bumpLevelStat(question.cefr_level, ok);
   }
 
   const weak_areas: string[] = [];
@@ -233,8 +291,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // TODO: restore score-based CEFR when placement test has enough questions and harder distractors
-  const cefr_level: CEFRLevel = "A1";
+  const cefr_level = placementFromLevelStats(levelStats);
 
   const { error: placementError } = await supabase.from("placements").upsert(
     {
@@ -273,7 +330,7 @@ export async function POST(request: Request) {
 
   await triggerCourseGeneration(request, session.language_code);
 
-  deletePlacementSession(test_session_id);
+  await deletePlacementSession(test_session_id);
 
   return NextResponse.json({
     cefr_level,
