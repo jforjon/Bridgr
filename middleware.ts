@@ -14,13 +14,13 @@ export async function middleware(request: NextRequest) {
   const response = await updateSession(request);
   const pathname = request.nextUrl.pathname;
 
+  if (pathname.startsWith("/api/")) {
+    return response;
+  }
+
   const isProtected = protectedRoutes.some((route) => isRouteMatch(pathname, route));
   const isAuthRedirectRoute = authRedirectRoutes.some((route) => pathname === route);
   const isPublic = publicRoutes.some((route) => pathname === route) || pathname === "/";
-
-  const hasAuthCookie = request.cookies
-    .getAll()
-    .some((cookie) => cookie.name.includes("sb-") && cookie.name.endsWith("-auth-token"));
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey =
@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
     userId = user?.id ?? null;
   }
 
-  const isAuthenticated = Boolean(userId) || hasAuthCookie;
+  const isAuthenticated = Boolean(userId);
 
   if (pathname === "/") {
     const rootDestination = request.nextUrl.clone();
@@ -120,7 +120,12 @@ export async function middleware(request: NextRequest) {
 
     if (!learningError) {
       const hasLearningLanguages = (learningRows ?? []).length > 0;
-      if (!hasLearningLanguages && pathname !== "/learn") {
+      if (
+        !hasLearningLanguages &&
+        !pathname.startsWith("/onboarding") &&
+        !pathname.startsWith("/placement") &&
+        pathname !== "/learn"
+      ) {
         const learnUrl = request.nextUrl.clone();
         learnUrl.pathname = "/learn";
         return NextResponse.redirect(learnUrl);
