@@ -44,19 +44,16 @@ export default function LandingPageClient() {
   };
 
   return (
-    <main className="min-h-screen bg-teal-900">
-      <div className="flex items-center justify-between px-6 pt-8">
-        <h1 className="font-sans text-3xl font-extrabold text-lime-300">Bridgr</h1>
-        <Link href="/login" className="text-sm font-bold text-lime-300 hover:underline">
-          Log in
-        </Link>
+    <main className="min-h-screen bg-[var(--bg)]">
+      <div className="px-6 pt-8">
+        <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></h1>
       </div>
 
       <section className="mt-12 px-6">
-        <h2 className="font-sans text-4xl font-extrabold leading-tight text-white">
+        <h2 className="font-sans text-4xl font-extrabold leading-tight text-[var(--text-primary)]">
           Learn faster using the languages you already speak
         </h2>
-        <p className="mt-4 text-base text-teal-200">The only app that builds on what you already know</p>
+        <p className="mt-4 text-base text-[var(--text-secondary)]">The only app that builds on what you already know</p>
       </section>
 
       <section className="mt-10">
@@ -67,12 +64,12 @@ export default function LandingPageClient() {
         >
           {slides.map((slide) => (
             <div key={slide.title} className="min-w-full snap-start px-6 py-2">
-              <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-8 text-center">
+              <div className="rounded-xl bg-[var(--card)] p-8 text-center">
                 <div className="mb-4 flex justify-center" role="img" aria-label={slide.iconLabel}>
-                  <slide.Icon size={48} className="text-lime-300" stroke={1.5} aria-hidden />
+                  <slide.Icon size={48} className="text-[var(--accent)]" stroke={1.5} aria-hidden />
                 </div>
-                <h3 className="font-sans text-2xl font-extrabold text-white">{slide.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-teal-200">{slide.body}</p>
+                <h3 className="font-sans text-2xl font-extrabold text-[var(--text-primary)]">{slide.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">{slide.body}</p>
               </div>
             </div>
           ))}
@@ -84,8 +81,8 @@ export default function LandingPageClient() {
               key={slide.title}
               className={
                 activeSlide === index
-                  ? "h-3 w-3 rounded-full bg-lime-300"
-                  : "h-2 w-2 rounded-full bg-teal-600"
+                  ? "h-3 w-3 rounded-pill bg-[#BFFF00] hover:bg-[#A8E000]"
+                  : "h-2 w-2 rounded-full bg-[var(--card-2)]"
               }
               aria-hidden="true"
             />
@@ -96,13 +93,13 @@ export default function LandingPageClient() {
       <section className="mt-10 px-6 pb-12">
         <Link
           href="/signup"
-          className="block w-full rounded-full bg-lime-300 py-4 text-center text-base font-extrabold text-lime-700"
+          className="block w-full rounded-pill bg-[#BFFF00] py-4 text-center text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
         >
           Start for free
         </Link>
         <Link
           href="/login"
-          className="mt-3 block w-full rounded-full border border-teal-400/30 py-4 text-center text-base font-bold text-teal-200"
+          className="mt-3 block w-full rounded-pill bg-[var(--card-2)] py-4 text-center text-base font-bold text-[var(--text-primary)]"
         >
           I already have an account
         </Link>

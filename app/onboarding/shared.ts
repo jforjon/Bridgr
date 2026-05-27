@@ -1,5 +1,3 @@
-"use client";
-
 import type { LanguageOption, Proficiency } from "@/types";
 
 export const ONBOARDING_TOTAL_STEPS = 6;

@@ -1,13 +1,6 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
-
-const plusJakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "800"],
-  variable: "--font-plus-jakarta",
-  display: "swap"
-});
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
   title: "Bridgr",
@@ -20,13 +13,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={plusJakarta.variable}>
-      <body
-        className={`${plusJakarta.className} font-sans bg-teal-900 text-white min-h-screen antialiased`}
-      >
-        <div className="min-h-screen w-full max-w-2xl mx-auto bg-teal-900 px-4 sm:px-6">
-          {children}
-        </div>
+    <html lang="en" suppressHydrationWarning>
+      <body className="min-h-screen bg-[var(--bg)] font-sans text-[var(--text-primary)] antialiased">
+        <ThemeProvider>
+          <div className="mx-auto min-h-screen w-full max-w-2xl bg-[var(--bg)] px-4 sm:px-6">
+            {children}
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

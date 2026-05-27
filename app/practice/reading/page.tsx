@@ -351,7 +351,7 @@ export default function PracticeReadingPage() {
   if (loading) {
     return (
       <>
-        <main className="bg-teal-900 p-6 pb-28 text-sm text-teal-200">Loading reading module...</main>
+        <main className="bg-[var(--bg)] p-6 pb-28 text-sm text-[var(--text-secondary)]">Loading reading module...</main>
         <BottomNav activeTab="practice" />
       </>
     );
@@ -360,36 +360,36 @@ export default function PracticeReadingPage() {
   if (error) {
     return (
       <>
-        <main className="bg-teal-900 p-6 pb-28 text-sm text-red-400">{error}</main>
+        <main className="bg-[var(--bg)] p-6 pb-28 text-sm text-red-400">{error}</main>
         <BottomNav activeTab="practice" hasLearningLanguage={hasLearningLanguage} />
       </>
     );
   }
 
   return (
-    <main className="min-h-screen bg-teal-900 pb-28">
+    <main className="min-h-screen bg-[var(--bg)] pb-28">
       <header className="px-4 pb-4 pt-6">
         <div className="mx-auto flex max-w-2xl items-center justify-between">
           <Link
             href="/practice"
             aria-label="Exit reading"
-            className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#1a3d38] text-[#8fbfb8] transition hover:opacity-90"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[var(--card-2)] text-[var(--text-secondary)] transition hover:opacity-90"
           >
             <IconX size={18} stroke={1.75} />
           </Link>
-          <p className="text-center text-[13px] font-bold text-[#8fbfb8]">{`${progressCurrent} / 3`}</p>
+          <p className="text-center text-[13px] font-bold text-[var(--text-secondary)]">{`${progressCurrent} / 3`}</p>
           <span className="h-[36px] w-[36px] shrink-0" aria-hidden />
         </div>
       </header>
-      <div className="h-2 w-full overflow-hidden rounded-full bg-teal-700">
-        <div className="h-full rounded-full bg-lime-300 transition-all" style={{ width: progressWidth }} />
+      <div className="h-[3px] w-full overflow-hidden rounded-pill bg-[var(--card-2)]">
+        <div className="h-full rounded-pill bg-[#BFFF00] hover:bg-[#A8E000] transition-all" style={{ width: progressWidth }} />
       </div>
 
       {stage === "reading" && (
         <section className="mt-6 px-4">
-          <h1 className="mb-2 font-sans text-2xl font-extrabold text-white">Read the passage</h1>
-          <p className="mb-6 text-sm text-teal-200">Tap any word to see its meaning</p>
-          <article className="rounded-xl border border-teal-400/30 bg-teal-800 p-6 text-lg leading-9 text-teal-100">
+          <h1 className="mb-2 font-sans text-2xl font-extrabold text-[var(--text-primary)]">Read the passage</h1>
+          <p className="mb-6 text-sm text-[var(--text-secondary)]">Tap any word to see its meaning</p>
+          <article className="rounded-xl bg-[var(--card)] p-6 text-lg leading-9 text-[var(--text-secondary)]">
             {tokens.map((token, index) => {
               if (!token.isWord) return <span key={token.id}>{token.word}</span>;
               const prev = tokens[index - 1];
@@ -407,7 +407,7 @@ export default function PracticeReadingPage() {
                         void handleWordTap(token);
                       }
                     }}
-                    className={`rounded px-0.5 ${isKnownTap ? "bg-lime-300/10" : "active:bg-amber/10"}`}
+                    className={`rounded px-0.5 ${isKnownTap ? "bg-[var(--card-2)]" : "active:bg-amber/10"}`}
                   >
                     {token.word}
                   </span>
@@ -415,11 +415,11 @@ export default function PracticeReadingPage() {
               );
             })}
           </article>
-          <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-teal-700/50 bg-teal-900 px-4 py-4">
+          <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--bg)] px-4 py-4">
             <button
               type="button"
               onClick={() => setStage("questions")}
-              className="w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700"
+              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
             >
               Done reading
             </button>
@@ -429,11 +429,11 @@ export default function PracticeReadingPage() {
 
       {stage === "questions" && (
         <section className="mt-6 px-4">
-          <h2 className="mb-2 font-sans text-2xl font-extrabold text-white">Check your understanding</h2>
-          <p className="mb-6 text-sm text-teal-200">Answer all questions to continue</p>
+          <h2 className="mb-2 font-sans text-2xl font-extrabold text-[var(--text-primary)]">Check your understanding</h2>
+          <p className="mb-6 text-sm text-[var(--text-secondary)]">Answer all questions to continue</p>
           {QUESTIONS.map((question) => (
-            <div key={question.id} className="mb-4 rounded-xl border border-teal-400/30 bg-teal-800 p-5">
-              <p className="mb-4 text-base font-bold text-white">{question.prompt}</p>
+            <div key={question.id} className="mb-4 rounded-xl bg-[var(--card)] p-5">
+              <p className="mb-4 text-base font-bold text-[var(--text-primary)]">{question.prompt}</p>
               {question.options.map((option) => {
                 const selected = answers[question.id] === option;
                 return (
@@ -441,8 +441,8 @@ export default function PracticeReadingPage() {
                     key={option}
                     className={`mb-2 block cursor-pointer rounded-xl border px-4 py-3 text-sm font-semibold ${
                       selected
-                        ? "border-lime-300/50 bg-lime-300/10 text-lime-300"
-                        : "border-teal-400/30 text-teal-100"
+                        ? "border-[var(--accent)]/50 bg-[var(--card-2)] text-[var(--accent)]"
+                        : "border-[var(--border)] text-[var(--text-secondary)]"
                     }`}
                   >
                     <input
@@ -458,12 +458,12 @@ export default function PracticeReadingPage() {
               })}
             </div>
           ))}
-          <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-teal-700/50 bg-teal-900 px-4 py-4">
+          <div className="fixed bottom-20 left-0 right-0 z-30 border-t border-[var(--border)] bg-[var(--bg)] px-4 py-4">
             <button
               type="button"
               onClick={handleSubmitQuiz}
               disabled={Object.keys(answers).length !== QUESTIONS.length}
-              className="w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 disabled:opacity-50"
+              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
             >
               Submit answers
             </button>
@@ -473,32 +473,32 @@ export default function PracticeReadingPage() {
 
       {stage === "results" && (
         <section className="mt-6 px-4">
-          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-lime-300/30 bg-lime-300/10">
-            <p className="font-sans text-3xl font-extrabold text-lime-300">
+          <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full border-2 border-[var(--accent)]/30 bg-[var(--card-2)]">
+            <p className="font-sans text-3xl font-extrabold text-[var(--accent)]">
               {score ?? 0}/{QUESTIONS.length}
             </p>
           </div>
-          <h2 className="mt-6 text-center font-sans text-2xl font-extrabold text-white">Well done!</h2>
-          <p className="mt-2 text-center text-sm text-teal-200">
+          <h2 className="mt-6 text-center font-sans text-2xl font-extrabold text-[var(--text-primary)]">Well done!</h2>
+          <p className="mt-2 text-center text-sm text-[var(--text-secondary)]">
             {tappedUnknownWordIds.size} unknown words tapped
           </p>
           <button
             type="button"
             onClick={() => void handleAddUnknownToQueue()}
             disabled={queueSaving}
-            className="mt-8 w-full rounded-full bg-lime-300 px-4 py-4 text-base font-extrabold text-lime-700 disabled:opacity-60"
+            className="mt-8 w-full rounded-pill bg-[#BFFF00] px-4 py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-60"
           >
             {queueSaving ? "Adding..." : "Add unknown words to review"}
           </button>
           <Link
             href="/learn"
-            className="mt-3 block w-full rounded-full border border-teal-400/30 py-4 text-center text-sm font-extrabold text-teal-200"
+            className="mt-3 block w-full rounded-full border border-[var(--border)] py-4 text-center text-sm font-extrabold text-[var(--text-secondary)]"
           >
             Back to home
           </Link>
           {queueMessage ? (
             <p
-              className={`mt-4 text-sm ${queueMessage.startsWith("Added ") ? "text-lime-300" : "text-teal-200"}`}
+              className={`mt-4 text-sm ${queueMessage.startsWith("Added ") ? "text-[var(--accent)]" : "text-[var(--text-secondary)]"}`}
             >
               {queueMessage}
             </p>
@@ -520,13 +520,13 @@ export default function PracticeReadingPage() {
       <div
         role="dialog"
         aria-modal="true"
-        className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-teal-400/30 bg-teal-800 p-6 shadow-2xl transition-transform ${
+        className={`fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-[var(--border)] bg-[var(--card)] p-6 shadow-2xl transition-transform ${
           activeWord ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-teal-600" />
-        <p className="mb-1 font-sans text-3xl font-extrabold text-white">{activeWord?.word ?? ""}</p>
-        <p className="mb-4 text-base text-teal-200">{activeWord?.translation ?? ""}</p>
+        <div className="mx-auto mb-4 h-1.5 w-12 rounded-full bg-[var(--card-2)]" />
+        <p className="mb-1 font-sans text-3xl font-extrabold text-[var(--text-primary)]">{activeWord?.word ?? ""}</p>
+        <p className="mb-4 text-base text-[var(--text-secondary)]">{activeWord?.translation ?? ""}</p>
         <div className="rounded-xl border border-amber/20 bg-amber/10 p-4">
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-amber">Hint</p>
           {hintLoading ? (
@@ -545,7 +545,7 @@ export default function PracticeReadingPage() {
         </div>
         <button
           type="button"
-          className="mt-4 w-full rounded-full bg-lime-300 py-3 text-base font-extrabold text-lime-700"
+          className="mt-4 w-full rounded-pill bg-[#BFFF00] py-3 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
           onClick={() => {
             setActiveWord(null);
             setHint(null);

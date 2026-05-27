@@ -20,49 +20,45 @@ export default function FlashCard({
   return (
     <section
       onClick={revealed ? undefined : onReveal}
-      className={`rounded-xl border border-slate-200 bg-white p-6 shadow-sm ${
-        revealed ? "" : "cursor-pointer"
-      }`}
+      className={`rounded-xl bg-[var(--card)] p-6 ${revealed ? "" : "cursor-pointer"}`}
     >
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-slate-900">{word.word}</h2>
+        <h2 className="text-3xl font-black tracking-tight text-[var(--text-primary)]">{word.word}</h2>
         {word.romanization ? (
-          <p className="mt-2 text-base italic text-slate-500">{word.romanization}</p>
+          <p className="mt-2 text-base italic text-[var(--text-secondary)]">{word.romanization}</p>
         ) : null}
       </div>
 
       {revealed ? (
-        <div className="mt-6 space-y-4 border-t border-slate-100 pt-6">
+        <div className="mt-6 space-y-4 border-t border-[var(--border)] pt-6">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-slate-500">
+            <p className="text-sm font-bold uppercase tracking-label text-[var(--text-secondary)]">
               Translation
             </p>
-            <p className="mt-1 text-xl font-semibold text-primary">{word.translation}</p>
+            <p className="mt-1 text-xl font-extrabold text-[var(--accent)]">{word.translation}</p>
           </div>
 
           {word.part_of_speech ? (
-            <p className="text-sm text-slate-600">Part of speech: {word.part_of_speech}</p>
+            <p className="text-sm text-[var(--text-secondary)]">Part of speech: {word.part_of_speech}</p>
           ) : null}
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-lg bg-[var(--card-2)] p-4">
             {hintLoading ? (
-              <p className="text-sm text-amber-800">Loading hint...</p>
+              <p className="text-sm text-[var(--text-secondary)]">Loading hint...</p>
             ) : hint ? (
               <>
-                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                <p className="text-xs font-bold uppercase tracking-label text-[var(--text-secondary)]">
                   Hint
                 </p>
-                <p className="mt-1 text-sm text-amber-900">{hint.hint_text}</p>
+                <p className="mt-1 text-sm text-[var(--text-primary)]">{hint.hint_text}</p>
               </>
             ) : (
-              <p className="text-sm text-amber-800">No hint available for this word.</p>
+              <p className="text-sm text-[var(--text-secondary)]">No hint available for this word.</p>
             )}
           </div>
         </div>
       ) : (
-        <p className="mt-6 text-center text-sm font-semibold text-primary">
-          Tap to reveal
-        </p>
+        <p className="mt-6 text-center text-sm font-extrabold text-[var(--accent)]">Tap to reveal</p>
       )}
     </section>
   );

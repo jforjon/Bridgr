@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
-  "w-full rounded-xl border border-teal-400/30 bg-teal-850 px-3 py-3 text-sm text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
+  "w-full rounded-pill border-none bg-[var(--card-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -67,17 +67,17 @@ export default function LoginScreen() {
   };
 
   return (
-    <main className="flex min-h-screen items-start justify-center bg-teal-900">
-      <div className="w-full max-w-[375px] rounded-xl border border-teal-400/30 bg-teal-800">
+    <main className="flex min-h-screen items-start justify-center bg-[var(--bg)]">
+      <div className="w-full max-w-[375px] rounded-xl bg-[var(--card)]">
         <div className="px-6 pb-8 pt-12 text-center">
-          <h1 className="font-sans text-2xl font-extrabold text-lime-300">Bridgr</h1>
-          <h2 className="mt-8 font-sans text-2xl font-extrabold text-white">Welcome back</h2>
-          <p className="mt-2 text-sm text-teal-200">Continue your language journey</p>
+          <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></h1>
+          <h2 className="mt-8 font-sans text-2xl font-extrabold text-[var(--text-primary)]">Welcome back</h2>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">Continue your language journey</p>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-8 px-6">
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-bold text-white">
+            <label htmlFor="email" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
               Email
             </label>
             <input
@@ -92,7 +92,7 @@ export default function LoginScreen() {
           </div>
 
           <div className="mt-4">
-            <label htmlFor="password" className="mb-2 block text-sm font-bold text-white">
+            <label htmlFor="password" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
               Password
             </label>
             <div className="relative">
@@ -108,7 +108,7 @@ export default function LoginScreen() {
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-teal-300 hover:text-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-secondary)] hover:text-[var(--accent)] focus-visible:outline-none"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -117,7 +117,7 @@ export default function LoginScreen() {
           </div>
 
           <div className="mt-2 text-right">
-            <Link href="/forgot-password" className="text-sm text-lime-300 hover:underline">
+            <Link href="/forgot-password" className="text-sm text-[var(--accent)] hover:underline">
               Forgot your password?
             </Link>
           </div>
@@ -125,7 +125,7 @@ export default function LoginScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 transition-opacity disabled:opacity-50"
+            className="mt-6 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] transition-opacity hover:bg-[#A8E000] disabled:opacity-30"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
@@ -135,15 +135,15 @@ export default function LoginScreen() {
 
         <div className="mt-6 px-6">
           <div className="relative flex items-center">
-            <div className="flex-grow border-t border-teal-400/30" />
-            <span className="bg-teal-800 px-4 text-sm text-teal-200">or</span>
-            <div className="flex-grow border-t border-teal-400/30" />
+            <div className="flex-grow border-t border-[var(--border)]" />
+            <span className="bg-[var(--card)] px-4 text-sm text-[var(--text-secondary)]">or</span>
+            <div className="flex-grow border-t border-[var(--border)]" />
           </div>
         </div>
 
         <div className="mt-6 px-6 pb-12 text-center">
-          <p className="text-sm text-teal-200">Don&apos;t have an account?</p>
-          <Link href="/signup" className="mt-1 inline-block text-sm font-extrabold text-lime-300 hover:underline">
+          <p className="text-sm text-[var(--text-secondary)]">Don&apos;t have an account?</p>
+          <Link href="/signup" className="mt-1 inline-block text-sm font-extrabold text-[var(--accent)] hover:underline">
             Create a free account
           </Link>
         </div>

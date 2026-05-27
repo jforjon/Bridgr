@@ -1,5 +1,4 @@
 import type { Config } from "tailwindcss";
-import colors from "tailwindcss/colors";
 
 const config: Config = {
   content: [
@@ -9,16 +8,43 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        lime: {
+          DEFAULT: "#BFFF00",
+          light: "#6B8C00",
+          text: "#2A3800",
+          pressed: "#A8E000"
+        },
+        dark: {
+          bg: "#1A1A1A",
+          card: "#242424",
+          card2: "#2E2E2E"
+        },
+        light: {
+          bg: "#FFFFFF",
+          card: "#F4F4F4",
+          card2: "#EBEBEB"
+        },
+        danger: "#E53935",
+        success: "#2E7D32",
+        warning: "#F59E0B"
+      },
       fontFamily: {
-        sans: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui", "sans-serif"]
+        sans: ["Inter", "ui-sans-serif", "system-ui", "sans-serif"]
       },
       borderRadius: {
         sm: "8px",
         md: "12px",
-        lg: "14px",
-        xl: "20px",
-        "2xl": "24px",
+        lg: "18px",
+        xl: "22px",
+        "2xl": "28px",
         pill: "9999px"
+      },
+      letterSpacing: {
+        tight: "-0.04em",
+        tighter: "-0.03em",
+        label: "0.10em",
+        caption: "0.12em"
       },
       keyframes: {
         slideUp: {
@@ -28,57 +54,6 @@ const config: Config = {
       },
       animation: {
         "slide-up": "slideUp 260ms ease-out forwards"
-      },
-      colors: {
-        lime: {
-          ...colors.lime,
-          300: "#7fff5f",
-          700: "#1d6610"
-        },
-        teal: {
-          ...colors.teal,
-          50: "#e8f5f2",
-          100: "#c5ded6",
-          200: "#8fbfb8",
-          300: "#5a9990",
-          400: "#2f6b62",
-          500: "#45887c",
-          600: "#2a5a52",
-          700: "#224843",
-          800: "#1a3d38",
-          850: "#122f2b",
-          900: "#0d2b27",
-          950: "#081f1c"
-        },
-        amber: {
-          DEFAULT: "#ffd166"
-        },
-        danger: {
-          DEFAULT: "#c0392b",
-          hover: "#a93226",
-          press: "#922b22"
-        },
-        background: "#0d2b27",
-        foreground: "#e8f5f2",
-        card: "#1a3d38",
-        muted: "#8fbfb8",
-        border: "#2f6b62",
-        primary: {
-          DEFAULT: "#7fff5f",
-          foreground: "#1d6610",
-          50: "#f0ffe8",
-          100: "#d4ffbf",
-          200: "#aeff87",
-          300: "#7fff5f",
-          400: "#5fd944",
-          500: "#44b32e",
-          600: "#2a5a52",
-          700: "#224843",
-          800: "#1a3d38"
-        },
-        input: "#2f6b62",
-        ring: "#7fff5f",
-        "muted-foreground": "#8fbfb8"
       }
     }
   },

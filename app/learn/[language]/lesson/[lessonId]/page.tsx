@@ -359,10 +359,10 @@ export default function LessonPage() {
 
   if (!lesson) {
     return (
-      <main className="min-h-screen bg-teal-900 px-5 pb-24 pt-8">
-        <p className="text-center text-sm text-teal-200">Lesson not found.</p>
+      <main className="min-h-screen bg-[var(--bg)] px-5 pb-24 pt-8">
+        <p className="text-center text-sm text-[var(--text-secondary)]">Lesson not found.</p>
         <div className="mt-6 text-center">
-          <Link href={backHref} className="text-sm font-extrabold text-lime-300">
+          <Link href={backHref} className="text-sm font-extrabold text-[var(--accent)]">
             Back to course
           </Link>
         </div>
@@ -386,14 +386,14 @@ export default function LessonPage() {
 
   const comingSoon = (
     <div className="mx-auto max-w-lg px-5 py-8">
-      <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-8 text-center">
-        <p className="font-sans text-xl font-extrabold text-white">Coming soon</p>
-        <p className="mt-2 text-sm text-teal-200">
+      <div className="rounded-xl bg-[var(--card)] p-8 text-center">
+        <p className="font-sans text-xl font-extrabold text-[var(--text-primary)]">Coming soon</p>
+        <p className="mt-2 text-sm text-[var(--text-secondary)]">
           This lesson type is not available yet. Check back later.
         </p>
         <Link
           href={backHref}
-          className="mt-6 inline-flex items-center gap-2 rounded-full border border-teal-400/30 px-5 py-3 text-sm font-extrabold text-teal-200 hover:bg-teal-850"
+          className="mt-6 inline-flex items-center gap-2 rounded-full border border-[var(--border)] px-5 py-3 text-sm font-extrabold text-[var(--text-secondary)] hover:bg-[var(--card-2)]"
         >
           <ArrowLeft className="h-4 w-4" aria-hidden />
           Back to course
@@ -407,10 +407,10 @@ export default function LessonPage() {
 
   if (deckReady && lessonPhase === "complete") {
     return (
-      <main className="min-h-screen bg-teal-900 pb-36">
-        <p className="px-6 pt-8 font-sans text-xl font-extrabold text-lime-300">Bridgr</p>
-        <h1 className="mt-12 px-6 font-sans text-3xl font-extrabold text-white">You just learned</h1>
-        <p className="mt-2 px-6 text-base text-teal-200">
+      <main className="min-h-screen bg-[var(--bg)] pb-36">
+        <p className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></p>
+        <h1 className="mt-12 px-6 font-sans text-3xl font-extrabold text-[var(--text-primary)]">You just learned</h1>
+        <p className="mt-2 px-6 text-base text-[var(--text-secondary)]">
           {totalWords} new {totalWords === 1 ? "word" : "words"} in {targetLanguageName}
         </p>
 
@@ -418,22 +418,22 @@ export default function LessonPage() {
           {vocabItems.map((item) => (
             <div
               key={item.word_id}
-              className="mb-3 flex items-center justify-between rounded-xl border border-teal-400/30 bg-teal-800 px-5 py-4"
+              className="mb-3 flex items-center justify-between rounded-xl bg-[var(--card)] px-5 py-4"
             >
-              <p className="font-sans text-xl font-extrabold text-white">{item.word}</p>
-              <p className="text-base text-teal-200">{(item.translation_en ?? item.translation).trim()}</p>
+              <p className="font-sans text-xl font-extrabold text-[var(--text-primary)]">{item.word}</p>
+              <p className="text-base text-[var(--text-secondary)]">{(item.translation_en ?? item.translation).trim()}</p>
             </div>
           ))}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 border-t border-teal-700/50 bg-teal-900 px-6 pb-8 pt-4">
+        <div className="fixed bottom-0 left-0 right-0 border-t border-[var(--border)] bg-[var(--bg)] px-6 pb-8 pt-4">
           {completeError ? (
             <p className="mb-3 text-center text-sm text-red-400">{completeError}</p>
           ) : null}
           <button
             type="button"
             disabled={completeSaving}
-            className="w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 disabled:opacity-50"
+            className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
             onClick={() => {
               void (async () => {
                 setCompleteSaving(true);
@@ -454,7 +454,7 @@ export default function LessonPage() {
           <button
             type="button"
             disabled={completeSaving}
-            className="mt-3 w-full text-center text-sm font-bold text-teal-300 underline disabled:opacity-50"
+            className="mt-3 w-full text-center text-sm font-medium text-[var(--text-secondary)] disabled:opacity-50"
             onClick={() => {
               void (async () => {
                 setCompleteSaving(true);
@@ -498,25 +498,25 @@ export default function LessonPage() {
 
   if (deckReady && lessonPhase === "transition") {
     return (
-      <main className="flex min-h-screen flex-col bg-teal-900 pb-24">
-        <header className="sticky top-0 z-30 border-b border-teal-700/50 bg-teal-900/95 px-4 py-3 backdrop-blur">
+      <main className="flex min-h-screen flex-col bg-[var(--bg)] pb-24">
+        <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg)]/95 px-4 py-3 backdrop-blur">
           <div className="mx-auto flex max-w-lg items-center gap-3">
             <Link
               href={backHref}
-              className="rounded-lg p-2 text-teal-200 hover:bg-teal-800"
+              className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--card)]"
               aria-label="Back to course"
             >
               <ArrowLeft className="h-5 w-5" />
             </Link>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-wider text-teal-300">vocabulary</p>
-              <h1 className="truncate font-sans text-lg font-extrabold text-white">{lesson.title}</h1>
+              <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">vocabulary</p>
+              <h1 className="truncate font-sans text-lg font-extrabold text-[var(--text-primary)]">{lesson.title}</h1>
             </div>
             {process.env.NODE_ENV === "development" ? (
               <button
                 type="button"
                 onClick={() => setLessonPhase("complete")}
-                className="shrink-0 text-xs text-teal-400 underline"
+                className="shrink-0 text-sm font-medium text-[var(--text-secondary)]"
               >
                 skip
               </button>
@@ -524,14 +524,14 @@ export default function LessonPage() {
           </div>
         </header>
         <div className="mx-auto flex max-w-lg flex-1 flex-col items-center justify-center px-6 py-16 text-center">
-          <p className="font-sans text-2xl font-extrabold text-white">Now let&apos;s practise</p>
-          <p className="mt-4 text-sm text-teal-200">Try to recall each word from memory</p>
+          <p className="font-sans text-2xl font-extrabold text-[var(--text-primary)]">Now let&apos;s practise</p>
+          <p className="mt-4 text-sm text-[var(--text-secondary)]">Try to recall each word from memory</p>
           <button
             type="button"
             onClick={() => {
               setLessonPhase("practice");
             }}
-            className="mt-10 w-full max-w-sm rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700"
+            className="mt-10 w-full max-w-sm rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
           >
             Start practice
           </button>
@@ -542,18 +542,18 @@ export default function LessonPage() {
 
   if (deckReady && lessonPhase === "intro" && introItem) {
     return (
-      <main className="min-h-screen bg-teal-900 pb-32">
-        <div className="fixed inset-x-0 top-0 z-40 bg-teal-900">
-          <div className="mx-auto max-w-2xl border-b border-teal-700/50 px-4 py-3">
+      <main className="min-h-screen bg-[var(--bg)] pb-32">
+        <div className="fixed inset-x-0 top-0 z-40 bg-[var(--bg)]">
+          <div className="mx-auto max-w-2xl border-b border-[var(--border)] px-4 py-3">
             <div className="flex items-center justify-between">
               <Link
                 href={backHref}
                 aria-label="Close"
-                className="flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[#1a3d38] text-[#8fbfb8] transition hover:opacity-90"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[var(--card-2)] text-[var(--text-secondary)] transition hover:opacity-90"
               >
                 <IconX size={18} stroke={1.75} />
               </Link>
-              <p className="text-center text-[13px] font-bold text-[#8fbfb8]">
+              <p className="text-center text-[13px] font-bold text-[var(--text-secondary)]">
                 {`${introIndex + 1} / ${vocabItems.length}`}
               </p>
               <div className="flex h-[36px] w-[36px] shrink-0 items-center justify-end">
@@ -561,7 +561,7 @@ export default function LessonPage() {
                   <button
                     type="button"
                     onClick={() => setLessonPhase("complete")}
-                    className="border-0 bg-transparent p-0 text-xs text-teal-400 underline"
+                    className="border-0 bg-transparent p-0 text-sm font-medium text-[var(--text-secondary)]"
                   >
                     skip
                   </button>
@@ -570,37 +570,47 @@ export default function LessonPage() {
                 )}
               </div>
             </div>
-            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-teal-700">
-              <div className="h-full rounded-full bg-lime-300 transition-all" style={{ width: `${introProgressPct}%` }} />
+            <div className="mt-3 h-[3px] w-full overflow-hidden rounded-pill bg-[var(--card-2)]">
+              <div className="h-full rounded-pill bg-[#BFFF00] hover:bg-[#A8E000] transition-all" style={{ width: `${introProgressPct}%` }} />
             </div>
           </div>
         </div>
 
-        <div className="mx-auto max-w-2xl px-4 pt-24">
-          <div className="rounded-xl border border-teal-400/30 bg-teal-800 p-8 text-center">
-            <p className="text-center font-sans text-5xl font-extrabold text-white">{introItem.word}</p>
-            <p className="mt-4 text-center text-2xl text-teal-200">
+        <div className="mx-auto max-w-2xl pt-24">
+          <div className="mx-5 mt-6 rounded-[22px] bg-[var(--card)] p-6 text-center">
+            <p className="mt-2 text-center text-4xl font-black tracking-tight text-[var(--text-primary)]">
+              {introItem.word}
+            </p>
+            <p className="mt-2 text-center text-lg font-medium text-[var(--text-secondary)]">
               {(introItem.translation_en ?? introItem.translation).trim()}
             </p>
             {introItem.part_of_speech?.trim() ? (
-              <div className="mt-5 flex justify-center">
-                <p className="inline-flex rounded-full border border-teal-400/30 bg-teal-850 px-3 py-1 text-xs font-bold uppercase tracking-wider text-teal-200">
+              <div className="mt-3 flex justify-center">
+                <span className="inline-block rounded-full border border-[var(--border)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">
                   {introItem.part_of_speech}
-                </p>
+                </span>
               </div>
             ) : null}
 
-            <div className="mt-8 rounded-[12px] bg-[rgba(127,255,95,0.1)] px-4 py-[14px] text-left text-[14px] font-semibold text-lime-300">
-              <span aria-hidden>💡 </span>
-              {introHookParagraph ? (
-                <span className="whitespace-pre-wrap">{introHookParagraph}</span>
-              ) : !hooksPrefetchDone ? (
-                <span className="text-lime-300/80">Loading tip…</span>
-              ) : (
-                <span className="text-lime-300/90">No memory hook for this word yet.</span>
-              )}
+            <div className="mt-8 text-left">
+              <p className="text-sm font-medium leading-relaxed text-[var(--text-primary)]">
+                <span className="text-[var(--accent)]" aria-hidden>
+                  💡{" "}
+                </span>
+                {introHookParagraph ? (
+                  <span className="whitespace-pre-wrap">{introHookParagraph}</span>
+                ) : !hooksPrefetchDone ? (
+                  <span className="text-[var(--text-secondary)]">Loading tip…</span>
+                ) : (
+                  <span className="text-[var(--text-secondary)]">No memory hook for this word yet.</span>
+                )}
+              </p>
             </div>
+          </div>
+        </div>
 
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg)] p-5 pb-8">
+          <div className="mx-auto max-w-2xl">
             <button
               type="button"
               onClick={() => {
@@ -610,7 +620,7 @@ export default function LessonPage() {
                   setIntroIndex((i) => i + 1);
                 }
               }}
-              className="mt-10 w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700"
+              className="w-full rounded-full bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
             >
               Next
             </button>
@@ -621,19 +631,19 @@ export default function LessonPage() {
   }
 
   return (
-    <main className="min-h-screen bg-teal-900 pb-24">
-      <header className="sticky top-0 z-30 border-b border-teal-700/50 bg-teal-900/95 px-4 py-3 backdrop-blur">
+    <main className="min-h-screen bg-[var(--bg)] pb-24">
+      <header className="sticky top-0 z-30 border-b border-[var(--border)] bg-[var(--bg)]/95 px-4 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-lg items-center gap-3">
           <Link
             href={backHref}
-            className="rounded-lg p-2 text-teal-200 hover:bg-teal-800"
+            className="rounded-lg p-2 text-[var(--text-secondary)] hover:bg-[var(--card)]"
             aria-label="Back to course"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold uppercase tracking-wider text-teal-300">{lesson.type}</p>
-            <h1 className="truncate font-sans text-lg font-extrabold text-white">{lesson.title}</h1>
+            <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">{lesson.type}</p>
+            <h1 className="truncate font-sans text-lg font-extrabold text-[var(--text-primary)]">{lesson.title}</h1>
           </div>
         </div>
       </header>
@@ -648,7 +658,7 @@ export default function LessonPage() {
               <button
                 type="button"
                 onClick={() => void loadVocabBank()}
-                className="mt-4 rounded-full bg-lime-300 px-5 py-2 text-sm font-extrabold text-lime-700"
+                className="mt-4 rounded-pill bg-[#BFFF00] px-5 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
               >
                 Try again
               </button>
@@ -656,13 +666,13 @@ export default function LessonPage() {
           ) : deckReady && lessonPhase === null ? (
             <div className="mx-auto max-w-lg px-5 py-16 text-center">
               <div
-                className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-teal-600 border-t-lime-300"
+                className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-[var(--border)] border-t-[var(--accent)]"
                 aria-hidden
               />
-              <p className="mt-4 text-sm text-teal-200">Preparing introduction…</p>
+              <p className="mt-4 text-sm text-[var(--text-secondary)]">Preparing introduction…</p>
             </div>
           ) : (
-            <div className="mx-auto max-w-lg px-5 py-8 text-center text-sm text-teal-200">
+            <div className="mx-auto max-w-lg px-5 py-8 text-center text-sm text-[var(--text-secondary)]">
               No vocabulary for this lesson yet.
             </div>
           )}

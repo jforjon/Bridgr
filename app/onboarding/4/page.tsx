@@ -11,7 +11,7 @@ import {
 } from "../shared";
 
 const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-teal-700/50 bg-teal-900 px-6 py-4";
+  "fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4";
 
 export default function OnboardingStepFourPage() {
   const router = useRouter();
@@ -78,13 +78,13 @@ export default function OnboardingStepFourPage() {
 
   return (
     <>
-      <h1 className="font-sans text-3xl font-extrabold text-white">What would you like to learn?</h1>
+      <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">What would you like to learn?</h1>
 
       <div className="mt-6 space-y-3">
         {loading ? (
-          <p className="text-sm text-teal-200">Loading languages...</p>
+          <p className="text-sm text-[var(--text-secondary)]">Loading languages...</p>
         ) : availableLanguages.length === 0 ? (
-          <p className="rounded-xl border border-teal-400/30 bg-teal-800 p-4 text-sm text-teal-200">
+          <p className="rounded-xl bg-[var(--card)] p-4 text-sm text-[var(--text-secondary)]">
             You already added all available languages.
           </p>
         ) : (
@@ -96,14 +96,14 @@ export default function OnboardingStepFourPage() {
                 type="button"
                 onClick={() => setSelectedLanguageCode(language.code)}
                 className={`flex w-full items-center rounded-xl border px-4 py-4 text-left ${
-                  selected ? "border-lime-300 bg-lime-300/10" : "border-teal-400/30 bg-teal-800"
+                  selected ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
                 }`}
               >
                 <span className="text-2xl">{getLanguageVisual(language)}</span>
-                <span className="ml-3 text-base font-bold text-white">{language.name}</span>
+                <span className="ml-3 text-base font-bold text-[var(--text-primary)]">{language.name}</span>
                 <span
                   className={`ml-auto h-5 w-5 rounded-full border-2 ${
-                    selected ? "border-lime-300 bg-lime-300" : "border-teal-400 bg-teal-850"
+                    selected ? "border-[var(--accent)] bg-[#BFFF00]" : "border-[var(--border)] bg-[var(--card-2)]"
                   }`}
                 />
               </button>
@@ -119,7 +119,7 @@ export default function OnboardingStepFourPage() {
             type="button"
             onClick={() => void handleContinue()}
             disabled={loading || !selectedLanguageCode || saving}
-            className="h-auto min-h-0 w-full rounded-full border-0 bg-lime-300 py-4 text-base font-extrabold text-lime-700 hover:bg-lime-300/90 disabled:opacity-50"
+            className="h-auto min-h-0 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Continue"}
           </Button>

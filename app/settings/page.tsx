@@ -226,40 +226,40 @@ export default function SettingsPage() {
 
   if (loading || !profile) {
     return (
-      <main className="bg-teal-900 p-6 text-sm text-teal-200">Loading settings...</main>
+      <main className="bg-[var(--bg)] p-6 text-sm text-[var(--text-secondary)]">Loading settings...</main>
     );
   }
 
   const inputClass =
-    "w-full rounded-xl border border-teal-400/30 bg-teal-850 px-3 py-2 text-sm text-white placeholder:text-teal-300 focus:border-lime-300 focus:outline-none";
+    "w-full rounded-pill border-none bg-[var(--card-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
 
   return (
-    <main className="min-h-screen bg-teal-900 pb-8">
+    <main className="min-h-screen bg-[var(--bg)] pb-8">
       <header className="relative flex items-center justify-center px-5 pt-8">
         <Link
           href="/profile"
-          className="absolute left-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-teal-400/30 bg-teal-800 text-teal-200"
+          className="absolute left-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-secondary)]"
           aria-label="Back to profile"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="font-sans text-xl font-extrabold text-white">Settings</h1>
+        <h1 className="font-sans text-xl font-extrabold text-[var(--text-primary)]">Settings</h1>
       </header>
 
-      <section className="mx-5 mt-6 rounded-xl border border-teal-400/30 bg-teal-800 p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-teal-300">Account</h2>
+      <section className="mx-5 mt-6 rounded-xl bg-[var(--card)] p-5">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Account</h2>
 
-        <div className="mb-4 border-b border-teal-400/20 pb-4">
+        <div className="mb-4 border-b border-[var(--border)]/20 pb-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-teal-200">Name</p>
+            <p className="text-sm text-[var(--text-secondary)]">Name</p>
             {!editName ? (
-              <button type="button" onClick={() => setEditName(true)} className="text-sm font-extrabold text-lime-300">
+              <button type="button" onClick={() => setEditName(true)} className="text-sm font-extrabold text-[var(--accent)]">
                 Edit
               </button>
             ) : null}
           </div>
           {!editName ? (
-            <p className="mt-1 text-base font-bold text-white">{profile.name || "Not set"}</p>
+            <p className="mt-1 text-base font-bold text-[var(--text-primary)]">{profile.name || "Not set"}</p>
           ) : (
             <div className="mt-2 flex gap-2">
               <input
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void saveName()}
                 disabled={saving}
-                className="shrink-0 rounded-full bg-lime-300 px-4 py-2 text-sm font-extrabold text-lime-700 disabled:opacity-50"
+                className="shrink-0 rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
               >
                 Save
               </button>
@@ -279,17 +279,17 @@ export default function SettingsPage() {
           )}
         </div>
 
-        <div className="mb-4 border-b border-teal-400/20 pb-4">
+        <div className="mb-4 border-b border-[var(--border)]/20 pb-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-teal-200">Email</p>
+            <p className="text-sm text-[var(--text-secondary)]">Email</p>
             {!editEmail ? (
-              <button type="button" onClick={() => setEditEmail(true)} className="text-sm font-extrabold text-lime-300">
+              <button type="button" onClick={() => setEditEmail(true)} className="text-sm font-extrabold text-[var(--accent)]">
                 Change
               </button>
             ) : null}
           </div>
           {!editEmail ? (
-            <p className="mt-1 text-base font-bold text-white">{email}</p>
+            <p className="mt-1 text-base font-bold text-[var(--text-primary)]">{email}</p>
           ) : (
             <div className="mt-2 flex gap-2">
               <input
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void saveEmail()}
                 disabled={saving}
-                className="shrink-0 rounded-full bg-lime-300 px-4 py-2 text-sm font-extrabold text-lime-700 disabled:opacity-50"
+                className="shrink-0 rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
               >
                 Save
               </button>
@@ -312,11 +312,11 @@ export default function SettingsPage() {
 
         <div>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-teal-200">Password</p>
+            <p className="text-sm text-[var(--text-secondary)]">Password</p>
             <button
               type="button"
               onClick={() => setShowPasswordForm((current) => !current)}
-              className="text-sm font-extrabold text-lime-300"
+              className="text-sm font-extrabold text-[var(--accent)]"
             >
               Change password
             </button>
@@ -348,7 +348,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void savePassword()}
                 disabled={saving}
-                className="rounded-full bg-lime-300 px-4 py-2 text-sm font-extrabold text-lime-700 disabled:opacity-50"
+                className="rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
               >
                 Save password
               </button>
@@ -357,18 +357,18 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="mx-5 mt-4 rounded-xl border border-teal-400/30 bg-teal-800 p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-teal-300">Learning</h2>
+      <section className="mx-5 mt-4 rounded-xl bg-[var(--card)] p-5">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Learning</h2>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-teal-200">Weekly goal</p>
+          <p className="text-sm text-[var(--text-secondary)]">Weekly goal</p>
           {!editWeeklyGoal ? (
-            <button type="button" onClick={() => setEditWeeklyGoal(true)} className="text-sm font-extrabold text-lime-300">
+            <button type="button" onClick={() => setEditWeeklyGoal(true)} className="text-sm font-extrabold text-[var(--accent)]">
               Edit
             </button>
           ) : null}
         </div>
         {!editWeeklyGoal ? (
-          <p className="mt-1 text-base font-bold text-white">{weeklyGoalLabel}</p>
+          <p className="mt-1 text-base font-bold text-[var(--text-primary)]">{weeklyGoalLabel}</p>
         ) : (
           <div className="mt-3 space-y-2">
             {WEEKLY_GOAL_OPTIONS.map((option) => {
@@ -379,11 +379,11 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => setWeeklyGoalDraft(option.value)}
                   className={`block w-full rounded-xl border p-3 text-left ${
-                    selected ? "border-lime-300/50 bg-lime-300/10" : "border-teal-400/30 bg-teal-850"
+                    selected ? "border-[var(--accent)]/50 bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card-2)]"
                   }`}
                 >
-                  <p className="text-sm font-bold text-white">{option.label}</p>
-                  <p className="text-xs text-teal-200">{option.description}</p>
+                  <p className="text-sm font-bold text-[var(--text-primary)]">{option.label}</p>
+                  <p className="text-xs text-[var(--text-secondary)]">{option.description}</p>
                 </button>
               );
             })}
@@ -391,7 +391,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => void saveWeeklyGoal()}
               disabled={saving}
-              className="rounded-full bg-lime-300 px-4 py-2 text-sm font-extrabold text-lime-700 disabled:opacity-50"
+              className="rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
             >
               Save weekly goal
             </button>
@@ -399,19 +399,19 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="mx-5 mt-4 rounded-xl border border-teal-400/30 bg-teal-800 p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-teal-300">Notifications</h2>
+      <section className="mx-5 mt-4 rounded-xl bg-[var(--card)] p-5">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Notifications</h2>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-teal-200">Practice reminders</p>
+          <p className="text-sm text-[var(--text-secondary)]">Practice reminders</p>
           <button
             type="button"
             onClick={() => setNotificationEnabled((current) => !current)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-              notificationEnabled ? "bg-lime-300" : "bg-teal-700"
+              notificationEnabled ? "bg-[#BFFF00]" : "bg-[var(--card-2)]"
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-teal-900 transition ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--bg)] transition ${
                 notificationEnabled ? "translate-x-6" : "translate-x-1"
               }`}
             />
@@ -430,8 +430,8 @@ export default function SettingsPage() {
                     onClick={() => toggleDay(day)}
                     className={`rounded-full border px-3 py-1.5 text-sm font-extrabold ${
                       selected
-                        ? "border-lime-300 bg-lime-300 text-lime-700"
-                        : "border-teal-400/30 text-teal-200"
+                        ? "border-[var(--accent)] bg-[#BFFF00] text-[#2A3800]"
+                        : "border-[var(--border)] text-[var(--text-secondary)]"
                     }`}
                   >
                     {day}
@@ -452,7 +452,7 @@ export default function SettingsPage() {
           type="button"
           onClick={() => void saveNotifications()}
           disabled={saving}
-          className="mt-4 rounded-full bg-teal-600 px-4 py-2 text-sm font-extrabold text-lime-300 disabled:opacity-50"
+          className="mt-4 rounded-full bg-[var(--card-2)] px-4 py-2 text-sm font-extrabold text-[var(--accent)] disabled:opacity-50"
         >
           Save notifications
         </button>
@@ -462,7 +462,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className="w-full rounded-full border border-teal-400/30 py-3 text-sm font-extrabold text-teal-200"
+          className="w-full rounded-full border border-[var(--border)] py-3 text-sm font-extrabold text-[var(--text-secondary)]"
         >
           Sign out
         </button>
@@ -475,7 +475,7 @@ export default function SettingsPage() {
         </button>
       </section>
 
-      {success ? <p className="mt-4 px-5 text-sm font-bold text-lime-300">{success}</p> : null}
+      {success ? <p className="mt-4 px-5 text-sm font-bold text-[var(--accent)]">{success}</p> : null}
       {error ? <p className="mt-2 px-5 text-sm text-red-400">{error}</p> : null}
 
       {deleteConfirmOpen ? (
@@ -484,11 +484,11 @@ export default function SettingsPage() {
           onClick={() => !deleting && setDeleteConfirmOpen(false)}
         >
           <div
-            className="mx-auto max-w-sm rounded-xl border border-teal-400/30 bg-teal-800 p-6 shadow-xl"
+            className="mx-auto max-w-sm rounded-xl bg-[var(--card)] p-6 shadow-xl"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="font-sans text-xl font-extrabold text-white">Delete account?</h2>
-            <p className="mt-2 text-sm text-teal-200">
+            <h2 className="font-sans text-xl font-extrabold text-[var(--text-primary)]">Delete account?</h2>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">
               This permanently removes your profile, progress, and account. This action cannot be undone.
             </p>
             <div className="mt-6 flex gap-3">
@@ -496,7 +496,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => setDeleteConfirmOpen(false)}
-                className="flex-1 rounded-full border border-teal-400/30 px-5 py-2.5 text-sm font-extrabold text-teal-200 disabled:opacity-50"
+                className="flex-1 rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-extrabold text-[var(--text-secondary)] disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -504,7 +504,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => void deleteAccount()}
-                className="flex-1 rounded-full bg-red-600 px-5 py-2.5 text-sm font-extrabold text-white disabled:opacity-50"
+                className="flex-1 rounded-full bg-red-600 px-5 py-2.5 text-sm font-extrabold text-[var(--text-primary)] disabled:opacity-50"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>

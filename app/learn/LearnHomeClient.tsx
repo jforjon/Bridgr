@@ -9,7 +9,6 @@ import {
   IconCheck,
   IconChevronDown,
   IconFileText,
-  IconFlame,
   IconLock,
   IconPlus,
   IconRefresh,
@@ -45,7 +44,7 @@ function LanguageFlag({ code }: { code: string }) {
       </span>
     );
   }
-  return <IconWorld size={16} className="shrink-0 text-teal-300" stroke={1.75} aria-hidden />;
+  return <IconWorld size={16} className="shrink-0 text-[var(--text-secondary)]" stroke={1.75} aria-hidden />;
 }
 
 function getGreeting() {
@@ -63,31 +62,33 @@ function sortedLessons(lessons: Lesson[]) {
 }
 
 function LessonTypeIcon({ type }: { type: Lesson["type"] }) {
-  const wrap = "flex h-8 w-8 items-center justify-center rounded-lg bg-teal-700";
+  const wrap =
+    "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[var(--card-2)]";
+  const iconClass = "text-[var(--text-secondary)]";
   const s = 16;
   switch (type) {
     case "vocabulary":
       return (
         <span className={wrap}>
-          <IconCards size={s} className="text-lime-300" stroke={1.75} />
+          <IconCards size={s} className={iconClass} stroke={1.75} />
         </span>
       );
     case "grammar":
       return (
         <span className={wrap}>
-          <IconBook size={s} className="text-teal-200" stroke={1.75} />
+          <IconBook size={s} className={iconClass} stroke={1.75} />
         </span>
       );
     case "reading":
       return (
         <span className={wrap}>
-          <IconFileText size={s} className="text-teal-200" stroke={1.75} />
+          <IconFileText size={s} className={iconClass} stroke={1.75} />
         </span>
       );
     case "review":
       return (
         <span className={wrap}>
-          <IconRefresh size={s} className="text-[#ffd166]" stroke={1.75} />
+          <IconRefresh size={s} className={iconClass} stroke={1.75} />
         </span>
       );
     default:
@@ -110,11 +111,14 @@ export default function LearnHomeClient({
   const [isGenerating, setIsGenerating] = useState(false);
   const [beginnerError, setBeginnerError] = useState("");
 
-  const greetingName = (profile.name ?? "").trim() || "there";
+  const greetingNameRaw = (profile.name ?? "").trim() || "there";
+  const greetingName =
+    greetingNameRaw === "there"
+      ? greetingNameRaw
+      : greetingNameRaw.charAt(0).toUpperCase() + greetingNameRaw.slice(1);
   const weeklyGoal = Math.max(1, profile.weekly_goal || 3);
   const sessionsThisWeek = Math.max(0, profile.sessions_this_week || 0);
   const weeklyStreak = Math.max(0, profile.weekly_streak || 0);
-  const progressPct = Math.min(100, (sessionsThisWeek / weeklyGoal) * 100);
 
   const firstAvailableLesson = useMemo(() => {
     for (const unit of units) {
@@ -200,10 +204,10 @@ export default function LearnHomeClient({
   if (!course) {
     return (
       <>
-        <main className="min-h-screen bg-teal-900 pb-28 pt-10">
+        <main className="min-h-screen bg-[var(--bg)] pb-28 pt-10">
           <div className="mt-32 px-6 text-center">
-            <h1 className="font-sans text-3xl font-extrabold text-white">Welcome, {greetingName}</h1>
-            <p className="mx-auto mt-3 max-w-xs text-base text-teal-200">
+            <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">Welcome, {greetingName}</h1>
+            <p className="mx-auto mt-3 max-w-xs text-base text-[var(--text-secondary)]">
               Let&apos;s find your {activeLanguage.language_name} level before building your course
             </p>
 
@@ -211,10 +215,10 @@ export default function LearnHomeClient({
               {[1, 2, 3].map((index) => (
                 <div
                   key={index}
-                  className="rounded-lg border border-teal-400 bg-teal-800 p-4 blur-[0.3px]"
+                  className="rounded-lg bg-[var(--card)] p-4 blur-[0.3px]"
                 >
-                  <div className="mb-2 h-4 w-1/3 rounded bg-teal-600" />
-                  <div className="h-3 w-2/3 rounded bg-teal-700" />
+                  <div className="mb-2 h-4 w-1/3 rounded bg-[var(--card-2)]" />
+                  <div className="h-3 w-2/3 rounded bg-[var(--card-2)]" />
                 </div>
               ))}
             </div>
@@ -222,18 +226,18 @@ export default function LearnHomeClient({
             <div className="mt-8">
               <Link
                 href={`/placement/${encodeURIComponent(activeLanguage.language_code)}`}
-                className="block w-full rounded-full bg-lime-300 py-4 text-center text-base font-extrabold text-lime-700"
+                className="block w-full rounded-pill bg-[#BFFF00] py-4 text-center text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
               >
                 Take placement test
               </Link>
               <button
                 type="button"
                 onClick={() => void runBeginnerFlow()}
-                className="mt-3 w-full rounded-full bg-teal-600 py-4 text-center text-base font-extrabold text-lime-300"
+                className="mt-3 w-full rounded-full bg-[var(--card-2)] py-4 text-center text-base font-extrabold text-[var(--accent)]"
               >
                 I&apos;m a complete beginner
               </button>
-              <p className="mt-4 text-center text-xs text-teal-200">
+              <p className="mt-4 text-center text-xs text-[var(--text-secondary)]">
                 The placement test takes 2–3 minutes
               </p>
               {beginnerError ? <p className="mt-3 text-sm text-red-400">{beginnerError}</p> : null}
@@ -247,13 +251,13 @@ export default function LearnHomeClient({
 
   return (
     <>
-      <main className="min-h-screen bg-teal-900 pb-24 pt-10">
-        <header className="flex items-center justify-between px-5 pb-4 pt-0">
-          <h1 className="max-w-[65%] font-sans text-2xl font-extrabold leading-tight text-white">
+      <main className="min-h-screen bg-[var(--bg)] pb-24">
+        <header className="mt-6 flex items-center justify-between px-5 pb-4">
+          <h1 className="max-w-[65%] text-2xl font-black tracking-tight text-[var(--text-primary)]">
             {getGreeting()}, {greetingName}
           </h1>
           {learningLanguages.length > 1 ? (
-            <div className="relative inline-flex shrink-0 items-center gap-2 rounded-full border border-teal-400 bg-teal-800 px-3 py-1.5">
+            <div className="relative inline-flex shrink-0 items-center gap-2 rounded-full border border-[var(--border)] bg-[var(--card)] px-3 py-1.5">
               <select
                 value={activeLanguage.language_code}
                 onChange={(event) => router.push(`/learn?lang=${encodeURIComponent(event.target.value)}`)}
@@ -267,36 +271,67 @@ export default function LearnHomeClient({
                 ))}
               </select>
               <LanguageFlag code={activeLanguage.language_code} />
-              <span className="pointer-events-none text-sm font-bold text-white whitespace-nowrap">
+              <span className="pointer-events-none text-sm font-bold text-[var(--text-primary)] whitespace-nowrap">
                 {activeLanguage.language_name}
               </span>
-              <IconChevronDown size={14} className="pointer-events-none shrink-0 text-teal-300" stroke={2} />
+              <IconChevronDown size={14} className="pointer-events-none shrink-0 text-[var(--text-secondary)]" stroke={2} />
             </div>
           ) : null}
         </header>
 
-        <section className="mx-5 mt-4 rounded-lg border border-teal-400 bg-teal-800 p-5">
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            <IconFlame size={24} className="shrink-0 text-[#ffd166]" stroke={1.75} aria-hidden />
-            <span className="text-2xl font-extrabold text-white">{weeklyStreak}</span>
-            <span className="text-2xl text-teal-200">week streak</span>
-          </div>
-          {weeklyStreak === 0 ? (
-            <p className="mt-1 text-sm text-teal-200">Start your streak this week</p>
-          ) : null}
-          <p className="mt-3 text-xs font-bold uppercase tracking-wider text-teal-300">
-            {sessionsThisWeek} of {weeklyGoal} sessions this week
-          </p>
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-teal-700">
-            <div
-              className="h-full rounded-full bg-lime-300"
-              style={{ width: `${progressPct}%` }}
-            />
+        <section className="mx-5 mt-4 rounded-lg bg-[var(--card)] p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-5xl font-black tracking-tight text-[var(--accent)]">{weeklyStreak}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">
+                week streak
+              </p>
+              {weeklyStreak === 0 ? (
+                <p className="mt-2 text-sm text-[var(--text-secondary)]">Start your streak this week</p>
+              ) : null}
+            </div>
+            <div className="flex shrink-0 flex-col items-end">
+              <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">
+                this week
+              </p>
+              <div className="mt-2 flex flex-row gap-1" aria-hidden>
+                {Array.from({ length: weeklyGoal }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`h-[5px] w-[18px] rounded-full ${
+                      i < sessionsThisWeek ? "week-pip--filled" : "week-pip--empty"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] text-[var(--text-secondary)]">
+                {sessionsThisWeek} of {weeklyGoal} sessions
+              </p>
+            </div>
           </div>
         </section>
 
+        {firstAvailableLesson ? (
+          <div className="mx-5 mt-4">
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/learn/${encodeURIComponent(activeLanguage.language_code)}/lesson/${firstAvailableLesson.id}`
+                )
+              }
+              className="flex w-full items-center justify-between rounded-full bg-[#BFFF00] px-6 py-4 font-extrabold text-[#2A3800]"
+            >
+              <span>Continue lesson</span>
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black/10">
+                →
+              </span>
+            </button>
+          </div>
+        ) : null}
+
         <section className="mx-5 mb-24 mt-8">
-          <h2 className="mb-4 font-sans text-xl font-extrabold text-white">
+          <h2 className="mb-4 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-secondary)]">
             Your {activeLanguage.language_name} path
           </h2>
           <div>
@@ -309,7 +344,7 @@ export default function LearnHomeClient({
               return (
                 <article
                   key={unit.id}
-                  className="mb-3 overflow-hidden rounded-lg border border-teal-400 bg-teal-800"
+                  className="mb-3 overflow-hidden rounded-lg bg-[var(--card)]"
                 >
                   <button
                     type="button"
@@ -328,36 +363,36 @@ export default function LearnHomeClient({
                     }`}
                   >
                     {unit.status === "completed" ? (
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lime-300/20">
-                        <IconCheck size={16} className="text-lime-300" stroke={2} />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[var(--card-2)]">
+                        <IconCheck size={16} className="text-[var(--text-secondary)]" stroke={2} />
                       </span>
                     ) : unit.status === "available" ? (
                       <span
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-lime-300/20"
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[var(--card-2)] text-sm font-extrabold text-[var(--accent)]"
                         aria-hidden
                       >
-                        <span className="h-3 w-3 rounded-full bg-lime-300" />
+                        {unit.order_index + 1}
                       </span>
                     ) : (
-                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-teal-700">
-                        <IconLock size={14} className="text-teal-300" stroke={1.75} />
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--card-2)]">
+                        <IconLock size={14} className="text-[var(--text-secondary)]" stroke={1.75} />
                       </span>
                     )}
                     <span
                       className={`min-w-0 flex-1 text-base font-bold ${
-                        isLocked ? "text-teal-300" : "text-white"
+                        isLocked ? "text-[var(--text-secondary)]" : "text-[var(--text-primary)]"
                       }`}
                     >
                       {unit.title}
                     </span>
-                    <span className="shrink-0 rounded-full bg-teal-700 px-2 py-0.5 text-xs font-bold text-teal-200 uppercase">
+                    <span className="shrink-0 rounded-full bg-[var(--card-2)] px-2 py-0.5 text-xs font-bold text-[var(--text-secondary)] uppercase">
                       {unit.cefr_level}
                     </span>
                     {!isLocked ? (
                       <IconChevronDown
                         size={18}
                         stroke={2}
-                        className={`shrink-0 text-teal-300 transition-transform duration-300 ${
+                        className={`shrink-0 text-[var(--text-secondary)] transition-transform duration-300 ${
                           isExpanded ? "rotate-180" : "rotate-0"
                         }`}
                       />
@@ -371,22 +406,27 @@ export default function LearnHomeClient({
                       }`}
                     >
                       {note ? (
-                        <p className="px-4 pb-3 text-xs italic text-[#ffd166] leading-relaxed">{note}</p>
+                        <p className="px-4 pb-3 text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                          {note}
+                        </p>
                       ) : null}
-                      <div className="border-t border-teal-700">
+                      <div className="border-t border-[var(--border)]">
                         {unitLessons.map((lesson) => {
                           const canOpen =
                             lesson.status === "available" || lesson.status === "completed";
                           const href = `/learn/${encodeURIComponent(activeLanguage.language_code)}/lesson/${lesson.id}`;
                           const rowClass =
-                            "flex items-center gap-3 border-b border-teal-700 px-4 py-3 last:border-b-0";
+                            "flex items-center gap-3 border-b border-[var(--border)] px-4 py-3 last:border-b-0";
 
                           const dotClass =
                             lesson.status === "completed"
-                              ? "bg-lime-300"
+                              ? "bg-[var(--text-secondary)]"
                               : lesson.status === "available"
-                                ? "bg-teal-400"
-                                : "bg-teal-700";
+                                ? "bg-[var(--text-secondary)]"
+                                : "bg-[var(--card-2)]";
+
+                          const lessonCtaClass =
+                            "shrink-0 whitespace-nowrap rounded-full border border-[var(--accent)] px-3 py-1 text-[11px] font-bold text-[var(--accent)]";
 
                           if (canOpen) {
                             const isNextAvailable =
@@ -394,12 +434,12 @@ export default function LearnHomeClient({
                             return (
                               <Link key={lesson.id} href={href} className={rowClass}>
                                 <LessonTypeIcon type={lesson.type} />
-                                <span className="min-w-0 flex-1 text-sm font-semibold text-white">
+                                <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--text-primary)]">
                                   {lesson.title}
                                 </span>
-                                {isNextAvailable ? (
-                                  <span className="shrink-0 rounded-full bg-lime-300 px-3 py-1 text-xs font-extrabold text-lime-700">
-                                    Start
+                                {lesson.status === "available" ? (
+                                  <span className={lessonCtaClass}>
+                                    {isNextAvailable ? "Start" : "Continue"}
                                   </span>
                                 ) : (
                                   <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} aria-hidden />
@@ -411,7 +451,7 @@ export default function LearnHomeClient({
                           return (
                             <div key={lesson.id} className={rowClass}>
                               <LessonTypeIcon type={lesson.type} />
-                              <span className="min-w-0 flex-1 text-sm font-semibold text-teal-300">
+                              <span className="min-w-0 flex-1 text-sm font-semibold text-[var(--text-secondary)]">
                                 {lesson.title}
                               </span>
                               <span className={`h-2 w-2 shrink-0 rounded-full ${dotClass}`} aria-hidden />
@@ -430,10 +470,10 @@ export default function LearnHomeClient({
         <section className="mx-5 mt-2 mb-24">
           <Link
             href="/onboarding/4"
-            className="flex cursor-pointer flex-col items-center rounded-lg border border-dashed border-teal-400 p-4 text-center"
+            className="flex cursor-pointer flex-col items-center rounded-lg border border-dashed border-[var(--border)] p-4 text-center"
           >
-            <IconPlus size={20} className="mb-1 text-teal-300" stroke={1.75} />
-            <span className="text-sm font-semibold text-teal-300">Add another language</span>
+            <IconPlus size={20} className="mb-1 text-[var(--text-secondary)]" stroke={1.75} />
+            <span className="text-sm font-semibold text-[var(--text-secondary)]">Add another language</span>
           </Link>
         </section>
       </main>

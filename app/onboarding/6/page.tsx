@@ -12,10 +12,10 @@ import { ONBOARDING_LANGUAGE_STORAGE_KEY } from "../shared";
 const DAY_OPTIONS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 const timeInputClass =
-  "h-12 w-full rounded-xl border border-teal-400/30 bg-teal-850 px-4 text-white outline-none focus:border-lime-300";
+  "h-12 w-full rounded-pill border-none bg-[var(--card-2)] px-4 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
 
 const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-teal-700/50 bg-teal-900 px-6 py-4";
+  "fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4";
 
 function OnboardingStepSixContent() {
   const router = useRouter();
@@ -95,33 +95,33 @@ function OnboardingStepSixContent() {
 
   return (
     <>
-      <h1 className="font-sans text-3xl font-extrabold text-white">Would you like practice reminders?</h1>
+      <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">Would you like practice reminders?</h1>
 
       <div className="mt-6 space-y-3">
         <button
           type="button"
           onClick={() => setNotificationsEnabled(true)}
           className={`w-full rounded-xl border p-4 text-left ${
-            notificationsEnabled ? "border-lime-300 bg-lime-300/10" : "border-teal-400/30 bg-teal-800"
+            notificationsEnabled ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
           }`}
         >
-          <span className="text-base font-bold text-white">Yes, remind me</span>
+          <span className="text-base font-bold text-[var(--text-primary)]">Yes, remind me</span>
         </button>
         <button
           type="button"
           onClick={() => setNotificationsEnabled(false)}
           className={`w-full rounded-xl border p-4 text-left ${
-            notificationsEnabled === false ? "border-lime-300 bg-lime-300/10" : "border-teal-400/30 bg-teal-800"
+            notificationsEnabled === false ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
           }`}
         >
-          <span className="text-base font-bold text-white">No thanks</span>
+          <span className="text-base font-bold text-[var(--text-primary)]">No thanks</span>
         </button>
       </div>
 
       {notificationsEnabled ? (
         <div className="mt-6 space-y-5">
           <div>
-            <p className="mb-2 text-sm font-bold text-white">Days</p>
+            <p className="mb-2 text-sm font-bold text-[var(--text-primary)]">Days</p>
             <div className="flex flex-wrap gap-2">
               {DAY_OPTIONS.map((day) => {
                 const selected = notificationDays.includes(day);
@@ -132,8 +132,8 @@ function OnboardingStepSixContent() {
                     onClick={() => toggleDay(day)}
                     className={`rounded-full border px-3 py-2 text-sm font-bold ${
                       selected
-                        ? "border-lime-300 bg-lime-300 text-lime-700"
-                        : "border-teal-400/30 bg-teal-850 text-teal-200"
+                        ? "border-[var(--accent)] bg-[#BFFF00] text-[#2A3800]"
+                        : "border-[var(--border)] bg-[var(--card-2)] text-[var(--text-secondary)]"
                     }`}
                   >
                     {day}
@@ -144,7 +144,7 @@ function OnboardingStepSixContent() {
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-bold text-white" htmlFor="notification-time">
+            <label className="mb-2 block text-sm font-bold text-[var(--text-primary)]" htmlFor="notification-time">
               Time
             </label>
             <input
@@ -165,7 +165,7 @@ function OnboardingStepSixContent() {
             type="button"
             onClick={() => void handleContinue()}
             disabled={!canContinue || saving}
-            className="h-auto min-h-0 w-full rounded-full border-0 bg-lime-300 py-4 text-base font-extrabold text-lime-700 hover:bg-lime-300/90 disabled:opacity-50"
+            className="h-auto min-h-0 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-50"
           >
             {saving ? "Saving..." : "Continue"}
           </Button>
@@ -177,7 +177,7 @@ function OnboardingStepSixContent() {
 
 export default function OnboardingStepSixPage() {
   return (
-    <Suspense fallback={<p className="text-sm text-teal-200">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-[var(--text-secondary)]">Loading…</p>}>
       <OnboardingStepSixContent />
     </Suspense>
   );

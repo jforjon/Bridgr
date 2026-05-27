@@ -17,10 +17,10 @@ export function ProficiencyPicker({ value, onChange }: ProficiencyPickerProps) {
             key={option}
             type="button"
             onClick={() => onChange(option)}
-            className={`min-w-[2.25rem] rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+            className={`min-w-[2.25rem] rounded-pill border px-3 py-1.5 text-xs font-semibold transition ${
               selected
-                ? "border-primary bg-primary-600 text-white"
-                : "border border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200"
+                ? "border-[var(--accent)] bg-[#BFFF00] font-extrabold text-[#2A3800]"
+                : "border-[var(--border)] bg-[var(--card-2)] text-[var(--text-secondary)] hover:bg-[var(--card)]"
             }`}
           >
             {option}

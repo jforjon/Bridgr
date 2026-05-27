@@ -1,25 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --color-surface: #1a3d38;
-    --color-surface-2: #122f2b;
-    --color-border: #2f6b62;
-    --color-muted: #8fbfb8;
-    --color-primary: #7fff5f;
-    --color-primary-text: #1d6610;
-  }
+:root {
+  /* Accent */
+  --lime: #bfff00;
+  --lime-light: #6b8c00;
+  --lime-text: #2a3800;
+  --lime-pressed: #a8e000;
 
+  /* Semantic */
+  --danger: #e53935;
+  --success: #2e7d32;
+  --warning: #f59e0b;
+}
+
+/* Dark mode (default) */
+:root,
+.dark {
+  --bg: #1a1a1a;
+  --card: #242424;
+  --card-2: #2e2e2e;
+  --border: rgba(255, 255, 255, 0.07);
+  --text-primary: #f0f0f0;
+  --text-secondary: rgba(255, 255, 255, 0.32);
+  --text-disabled: rgba(255, 255, 255, 0.16);
+  --accent: #bfff00;
+  --accent-fill: #bfff00;
+}
+
+/* Light mode */
+.light {
+  --bg: #ffffff;
+  --card: #f4f4f4;
+  --card-2: #ebebeb;
+  --border: rgba(0, 0, 0, 0.07);
+  --text-primary: #111111;
+  --text-secondary: rgba(0, 0, 0, 0.32);
+  --text-disabled: rgba(0, 0, 0, 0.16);
+  --accent: #111111;
+  --accent-fill: #bfff00;
+}
+
+.week-pip--filled {
+  background-color: var(--accent-fill);
+}
+
+.week-pip--empty {
+  background-color: #3a3a3a;
+}
+
+.light .week-pip--empty {
+  background-color: #dcdcdc;
+}
+
+@layer base {
   * {
-    border-color: var(--color-border);
+    border-color: var(--border);
   }
 
   html,
   body {
-    background-color: #0d2b27;
-    color: #e8f5f2;
-    font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    background-color: var(--bg);
+    color: var(--text-primary);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-padding-default {
+    @apply py-[14px] px-[28px];
+  }
+
+  .btn-padding-sm {
+    @apply py-[9px] px-[18px];
   }
 }

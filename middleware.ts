@@ -93,43 +93,37 @@ export async function middleware(request: NextRequest) {
     }
   });
 
-  const { data: knownRows, error: knownError } = await supabase
-    .from("known_languages")
-    .select("id")
-    .eq("user_id", userId)
-    .limit(1);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("name")
+    .eq("id", userId)
+    .single();
 
-  if (knownError) {
-    return response;
-  }
+  const hasName = Boolean(profile?.name?.trim());
 
-  const hasKnownLanguages = (knownRows ?? []).length > 0;
-
-  if (!hasKnownLanguages && pathname !== "/onboarding/1") {
+  if (!hasName && pathname !== "/onboarding/1") {
     const onboardingUrl = request.nextUrl.clone();
     onboardingUrl.pathname = "/onboarding/1";
     return NextResponse.redirect(onboardingUrl);
   }
 
-  if (hasKnownLanguages) {
-    const { data: learningRows, error: learningError } = await supabase
-      .from("learning_languages")
+  if (hasName) {
+    const { data: knownRows } = await supabase
+      .from("known_languages")
       .select("id")
       .eq("user_id", userId)
       .limit(1);
 
-    if (!learningError) {
-      const hasLearningLanguages = (learningRows ?? []).length > 0;
-      if (
-        !hasLearningLanguages &&
-        !pathname.startsWith("/onboarding") &&
-        !pathname.startsWith("/placement") &&
-        pathname !== "/learn"
-      ) {
-        const learnUrl = request.nextUrl.clone();
-        learnUrl.pathname = "/learn";
-        return NextResponse.redirect(learnUrl);
-      }
+    const hasKnownLanguages = (knownRows ?? []).length > 0;
+    if (
+      !hasKnownLanguages &&
+      !pathname.startsWith("/onboarding") &&
+      !pathname.startsWith("/placement") &&
+      pathname !== "/learn"
+    ) {
+      const learnUrl = request.nextUrl.clone();
+      learnUrl.pathname = "/learn";
+      return NextResponse.redirect(learnUrl);
     }
   }
 

@@ -23,10 +23,10 @@ type SelectedKnownLanguage = {
 };
 
 const searchInputClass =
-  "h-12 w-full rounded-xl border border-teal-400/30 bg-teal-850 px-4 text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
+  "h-12 w-full rounded-pill border-none bg-[var(--card-2)] px-4 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
 
 const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-teal-700/50 bg-teal-900 px-6 py-4";
+  "fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4";
 
 export default function OnboardingStepThreePage() {
   const router = useRouter();
@@ -153,7 +153,7 @@ export default function OnboardingStepThreePage() {
       <div
         key={language.code}
         className={`w-full rounded-xl border transition-all ${
-          selected ? "border-lime-300 bg-lime-300/10" : "border-teal-400/30 bg-teal-800"
+          selected ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
         }`}
       >
         <button
@@ -162,18 +162,18 @@ export default function OnboardingStepThreePage() {
           className="flex w-full items-center px-5 py-4"
         >
           <span className="text-2xl">{getLanguageVisual(language)}</span>
-          <span className="ml-4 text-base font-bold text-white">{language.name}</span>
+          <span className="ml-4 text-base font-bold text-[var(--text-primary)]">{language.name}</span>
           <div className="ml-auto flex shrink-0 items-center justify-center">
             <div
               className={
                 selected
-                  ? "flex h-5 w-5 items-center justify-center rounded-sm border-2 border-lime-300 bg-lime-300"
-                  : "h-5 w-5 rounded-sm border-2 border-teal-400 bg-teal-850"
+                  ? "flex h-5 w-5 items-center justify-center rounded-sm border-2 border-[var(--accent)] bg-[#BFFF00]"
+                  : "h-5 w-5 rounded-sm border-2 border-[var(--border)] bg-[var(--card-2)]"
               }
               aria-hidden
             >
               {selected ? (
-                <IconCheck size={12} className="text-lime-700" stroke={3} aria-hidden />
+                <IconCheck size={12} className="text-[#2A3800]" stroke={3} aria-hidden />
               ) : null}
             </div>
           </div>
@@ -189,15 +189,15 @@ export default function OnboardingStepThreePage() {
                   onClick={() => setKnownProficiency(language.code, level)}
                   className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm font-bold ${
                     proficiency === level
-                      ? "border-lime-300 bg-lime-300 text-lime-700"
-                      : "border-teal-400/30 bg-teal-850 text-teal-200"
+                      ? "border-[var(--accent)] bg-[#BFFF00] text-[#2A3800]"
+                      : "border-[var(--border)] bg-[var(--card-2)] text-[var(--text-secondary)]"
                   }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <p className="ml-1 mt-1 text-xs italic text-teal-300">{LEVEL_CAPTION[proficiency]}</p>
+            <p className="ml-1 mt-1 text-xs italic text-[var(--text-secondary)]">{LEVEL_CAPTION[proficiency]}</p>
           </div>
         ) : null}
       </div>
@@ -207,13 +207,13 @@ export default function OnboardingStepThreePage() {
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-sans text-3xl font-extrabold text-white">
+        <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">
           What other languages do you speak?
         </h1>
         <button
           type="button"
           onClick={() => router.push("/onboarding/4")}
-          className="shrink-0 text-sm font-bold text-lime-300"
+          className="shrink-0 text-sm font-bold text-[var(--accent)]"
         >
           Skip
         </button>
@@ -234,19 +234,19 @@ export default function OnboardingStepThreePage() {
             className={searchInputClass}
           />
           {searchMenuOpen && searchDropdownCandidates.length > 0 ? (
-            <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-hidden rounded-xl border border-teal-400/30 bg-teal-850 shadow-lg">
+            <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-2)] shadow-lg">
               <div className="max-h-48 overflow-y-auto">
                 {searchDropdownCandidates.map((language) => (
                   <li key={language.code}>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-3 bg-teal-850 px-4 py-3 text-left text-sm text-white hover:bg-teal-800"
+                      className="flex w-full items-center gap-3 bg-[var(--card-2)] px-4 py-3 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--card)]"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => addLanguageFromSearch(language)}
                     >
                       <span className="text-xl">{getLanguageVisual(language)}</span>
                       <span className="font-bold">{language.name}</span>
-                      <span className="ml-auto text-xs text-teal-300">{language.code}</span>
+                      <span className="ml-auto text-xs text-[var(--text-secondary)]">{language.code}</span>
                     </button>
                   </li>
                 ))}
@@ -270,7 +270,7 @@ export default function OnboardingStepThreePage() {
               variant="outline"
               onClick={() => router.push("/onboarding/4")}
               disabled={saving}
-              className="h-auto min-h-0 rounded-full border border-teal-400/30 bg-transparent py-4 text-base font-extrabold text-teal-200 hover:bg-teal-800"
+              className="h-auto min-h-0 rounded-full border border-[var(--border)] bg-transparent py-4 text-base font-extrabold text-[var(--text-secondary)] hover:bg-[var(--card)]"
             >
               Skip
             </Button>
@@ -278,7 +278,7 @@ export default function OnboardingStepThreePage() {
               type="button"
               onClick={() => void handleContinue()}
               disabled={saving}
-              className="h-auto min-h-0 rounded-full border-0 bg-lime-300 py-4 text-base font-extrabold text-lime-700 hover:bg-lime-300/90 disabled:opacity-50"
+              className="h-auto min-h-0 rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-50"
             >
               {saving ? "Saving..." : "Continue"}
             </Button>

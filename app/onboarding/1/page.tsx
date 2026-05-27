@@ -1,86 +1,80 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
-
-const inputClass =
-  "h-12 w-full rounded-xl border border-teal-400/30 bg-teal-850 px-4 text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
-
-const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-teal-700/50 bg-teal-900 px-6 py-4";
+import { useState, useRef } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function OnboardingStepOnePage() {
-  const router = useRouter();
-  const supabase = createClient();
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const [name, setName] = useState("");
-  const [error, setError] = useState("");
-  const [saving, setSaving] = useState(false);
-
-  const canContinue = name.trim().length >= 1 && !saving;
-
-  const handleContinue = async () => {
-    const cleanedName = name.trim();
-    if (!cleanedName) return;
-
-    setSaving(true);
-    setError("");
-
+  async function handleContinue() {
+    const name = nameRef.current?.value ?? '';
+    if (!name.trim()) return;
+    setLoading(true);
+    setError('');
     try {
+      const supabase = createClient();
       const {
         data: { user },
-        error: userError
+        error: authError
       } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        throw userError ?? new Error("User not authenticated.");
+      if (authError || !user) {
+        setError('Session expired — please log in again');
+        setLoading(false);
+        return;
       }
-
       const { error: updateError } = await supabase
-        .from("profiles")
-        .update({ name: cleanedName })
-        .eq("id", user.id);
-
+        .from('profiles')
+        .update({ name: name.trim() })
+        .eq('id', user.id);
       if (updateError) {
-        throw updateError;
+        setError(updateError.message);
+        setLoading(false);
+        return;
       }
-
-      router.push("/onboarding/2");
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : String(submitError));
-    } finally {
-      setSaving(false);
+      window.location.href = '/onboarding/2';
+    } catch (e) {
+      console.error('caught error:', e);
+      setError('Something went wrong — please try again');
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <>
-      <h1 className="font-sans text-3xl font-extrabold text-white">What should we call you?</h1>
+    <div className="relative">
+      <h1 className="font-sans text-3xl font-black tracking-tight text-[var(--text-primary)]">
+        What should we call you?
+      </h1>
       <div className="mt-6">
         <input
+          ref={nameRef}
           type="text"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          defaultValue=""
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              void handleContinue();
+            }
+          }}
           placeholder="Your name"
-          className={inputClass}
+          className="h-12 w-full rounded-pill border-none bg-[var(--card-2)] px-4 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:outline-none"
+          autoComplete="name"
         />
+        {error ? <p className="mt-2 text-xs text-danger">{error}</p> : null}
       </div>
-
-      <div className={bottomBar}>
-        <div className="mx-auto w-full max-w-[480px]">
-          {error ? <p className="mb-2 text-sm text-red-400">{error}</p> : null}
-          <Button
-            type="button"
-            onClick={() => void handleContinue()}
-            disabled={!canContinue}
-            className="h-auto min-h-0 w-full rounded-full border-0 bg-lime-300 py-4 text-base font-extrabold text-lime-700 hover:bg-lime-300/90 disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Continue"}
-          </Button>
-        </div>
-      </div>
-    </>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          console.log('BUTTON CLICKED');
+          void handleContinue();
+        }}
+        disabled={loading}
+        className="mt-8 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:cursor-not-allowed disabled:opacity-30"
+      >
+        {loading ? 'Saving...' : 'Continue'}
+      </button>
+    </div>
   );
 }

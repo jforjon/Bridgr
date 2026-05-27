@@ -6,14 +6,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-type FieldErrors = {
-  email?: string;
-  password?: string;
-  confirmPassword?: string;
-};
-
 const inputBase =
-  "w-full rounded-xl border bg-teal-850 px-4 py-3 text-sm text-white placeholder:text-teal-300 outline-none focus:border-lime-300";
+  "w-full rounded-pill border-none bg-[var(--card-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -22,27 +16,33 @@ export default function SignUpPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
+  const [emailError, setEmailError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEmailError("");
+    setPasswordError("");
+    setConfirmPasswordError("");
     setError("");
 
-    const nextErrors: FieldErrors = {};
-    if (!email.trim()) {
-      nextErrors.email = "Please enter your email";
+    let hasError = false;
+    if (!email.includes("@") || !email.includes(".")) {
+      setEmailError("Please enter a valid email address");
+      hasError = true;
     }
-    if (password.length < 8) {
-      nextErrors.password = "Password must be at least 8 characters";
+    if (password.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      hasError = true;
     }
     if (password !== confirmPassword) {
-      nextErrors.confirmPassword = "Passwords do not match";
+      setConfirmPasswordError("Passwords don't match");
+      hasError = true;
     }
-
-    setFieldErrors(nextErrors);
-    if (Object.keys(nextErrors).length > 0) {
+    if (hasError) {
       return;
     }
 
@@ -55,7 +55,7 @@ export default function SignUpPage() {
     setLoading(false);
 
     if (signUpError) {
-      setError(signUpError.message);
+      setEmailError(signUpError.message);
       return;
     }
 
@@ -68,19 +68,23 @@ export default function SignUpPage() {
   };
 
   return (
-    <main className="flex min-h-screen justify-center bg-teal-900">
-      <div className="w-full max-w-[375px] rounded-xl border border-teal-400/30 bg-teal-800">
-        <section className="px-6 pb-8 pt-12 text-center">
-          <h1 className="font-sans text-2xl font-extrabold text-lime-300">Bridgr</h1>
-          <h2 className="mt-8 text-balance font-sans text-2xl font-extrabold text-white">
+    <main className="min-h-screen bg-[var(--bg)]">
+      <header className="px-6 pt-8">
+        <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></h1>
+      </header>
+
+      <div className="flex justify-center px-4 pt-6">
+        <div className="w-full max-w-[375px] rounded-xl bg-[var(--card)]">
+        <section className="px-6 pb-8 pt-4 text-center">
+          <h2 className="text-balance font-sans text-2xl font-extrabold text-[var(--text-primary)]">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-teal-200">Start learning smarter today</p>
+          <p className="mt-2 text-sm text-[var(--text-secondary)]">Start learning smarter today</p>
         </section>
 
-        <form onSubmit={handleSubmit} className="mt-8 px-6">
+        <form noValidate onSubmit={handleSubmit} className="mt-8 px-6">
           <div>
-            <label htmlFor="email" className="text-sm font-bold text-white">
+            <label htmlFor="email" className="text-sm font-bold text-[var(--text-primary)]">
               Email
             </label>
             <input
@@ -90,17 +94,17 @@ export default function SignUpPage() {
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
-                if (fieldErrors.email) {
-                  setFieldErrors((current) => ({ ...current, email: undefined }));
-                }
+                setEmailError("");
               }}
-              className={`${inputBase} mt-1.5 ${fieldErrors.email ? "border-red-500" : "border-teal-400/30"}`}
+              className={`${inputBase} mt-1.5 ${emailError ? "ring-1 ring-danger" : ""}`}
             />
-            {fieldErrors.email ? <p className="mt-1 text-sm text-red-400">{fieldErrors.email}</p> : null}
+            {emailError ? (
+              <p className="mt-1 text-xs text-red-400">{emailError}</p>
+            ) : null}
           </div>
 
           <div className="mt-4">
-            <label htmlFor="password" className="text-sm font-bold text-white">
+            <label htmlFor="password" className="text-sm font-bold text-[var(--text-primary)]">
               Password
             </label>
             <div className="relative mt-1.5">
@@ -111,28 +115,26 @@ export default function SignUpPage() {
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (fieldErrors.password) {
-                    setFieldErrors((current) => ({ ...current, password: undefined }));
-                  }
+                  setPasswordError("");
                 }}
-                className={`${inputBase} pl-4 pr-11 ${fieldErrors.password ? "border-red-500" : "border-teal-400/30"}`}
+                className={`${inputBase} pl-4 pr-11 ${passwordError ? "ring-1 ring-danger" : ""}`}
               />
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-teal-300 hover:text-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-secondary)] hover:text-[var(--accent)] focus-visible:outline-none"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {fieldErrors.password ? (
-              <p className="mt-1 text-sm text-red-400">{fieldErrors.password}</p>
+            {passwordError ? (
+              <p className="mt-1 text-xs text-red-400">{passwordError}</p>
             ) : null}
           </div>
 
           <div className="mt-4">
-            <label htmlFor="confirmPassword" className="text-sm font-bold text-white">
+            <label htmlFor="confirmPassword" className="text-sm font-bold text-[var(--text-primary)]">
               Confirm password
             </label>
             <div className="relative mt-1.5">
@@ -143,25 +145,23 @@ export default function SignUpPage() {
                 value={confirmPassword}
                 onChange={(e) => {
                   setConfirmPassword(e.target.value);
-                  if (fieldErrors.confirmPassword) {
-                    setFieldErrors((current) => ({ ...current, confirmPassword: undefined }));
-                  }
+                  setConfirmPasswordError("");
                 }}
                 className={`${inputBase} pl-4 pr-11 ${
-                  fieldErrors.confirmPassword ? "border-red-500" : "border-teal-400/30"
+                  confirmPasswordError ? "ring-1 ring-danger" : ""
                 }`}
               />
               <button
                 type="button"
                 aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-teal-300 hover:text-lime-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime-300"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-secondary)] hover:text-[var(--accent)] focus-visible:outline-none"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            {fieldErrors.confirmPassword ? (
-              <p className="mt-1 text-sm text-red-400">{fieldErrors.confirmPassword}</p>
+            {confirmPasswordError ? (
+              <p className="mt-1 text-xs text-red-400">{confirmPasswordError}</p>
             ) : null}
           </div>
 
@@ -169,7 +169,7 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-full bg-lime-300 py-4 text-base font-extrabold text-lime-700 disabled:opacity-50"
+              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
             >
               {loading ? "Creating account..." : "Create account"}
             </button>
@@ -179,11 +179,12 @@ export default function SignUpPage() {
         </form>
 
         <section className="mt-6 px-6 pb-12 text-center">
-          <p className="text-sm text-teal-200">Already have an account?</p>
-          <Link href="/login" className="mt-1 block text-sm font-extrabold text-lime-300 hover:underline">
+          <p className="text-sm text-[var(--text-secondary)]">Already have an account?</p>
+          <Link href="/login" className="mt-1 block text-sm font-extrabold text-[var(--accent)] hover:underline">
             Log in
           </Link>
         </section>
+        </div>
       </div>
     </main>
   );
