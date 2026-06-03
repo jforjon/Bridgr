@@ -1,6 +1,9 @@
 .next
 node_modules
 .env.local
+.env.test
+playwright-report/
+test-results/
 .DS_Store
 *.log
 .env.local

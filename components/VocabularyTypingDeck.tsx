@@ -83,8 +83,10 @@ export interface VocabularyTypingDeckProps {
   >;
 }
 
+const SESSION_CARD_LIMIT = 15;
+
 export default function VocabularyTypingDeck({
-  items,
+  items: itemsFromApi,
   languageCode,
   knownLanguageRows,
   exitHref,
@@ -98,6 +100,11 @@ export default function VocabularyTypingDeck({
   onLessonDeckFinished,
   prefetchedMemoryHooks
 }: VocabularyTypingDeckProps) {
+  const items = useMemo(
+    () => itemsFromApi.slice(0, SESSION_CARD_LIMIT),
+    [itemsFromApi]
+  );
+
   const [index, setIndex] = useState(0);
   const [lessonCompletionVisible, setLessonCompletionVisible] = useState(false);
   const [finishLessonLoading, setFinishLessonLoading] = useState(false);

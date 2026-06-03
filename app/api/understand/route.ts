@@ -26,7 +26,10 @@ function sliceJsonObject(text: string): string {
   if (first === -1 || last === -1) {
     throw new Error("No JSON object found in model response");
   }
-  return text.slice(first, last + 1);
+  // LLMs sometimes use curly/smart quotes inside string values, breaking JSON.parse
+  return text.slice(first, last + 1)
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'");
 }
 
 interface KnownLanguageInput {

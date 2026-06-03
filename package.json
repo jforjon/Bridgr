@@ -8,7 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "seed-placement-questions": "ts-node --project scripts/tsconfig.json scripts/seed-placement-questions.ts"
+    "seed-placement-questions": "ts-node --project scripts/tsconfig.json scripts/seed-placement-questions.ts",
+    "test": "playwright test --project=local",
+    "test:staging": "playwright test --project=staging",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.92.0",
@@ -32,6 +36,7 @@
     "typescript": "^5.7.2"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^25.6.2",
     "dotenv": "^17.4.2",
     "ts-node": "^10.9.2"

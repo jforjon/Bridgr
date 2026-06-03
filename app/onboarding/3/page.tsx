@@ -1,7 +1,7 @@
 "use client";
 
 import { IconCheck } from "@tabler/icons-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
@@ -37,6 +37,56 @@ export default function OnboardingStepThreePage() {
   const [searchMenuOpen, setSearchMenuOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [nativeLanguageCode, setNativeLanguageCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadNativeLanguage = async () => {
+      const {
+        data: { user },
+        error: userError
+      } = await supabase.auth.getUser();
+
+      if (userError || !user || cancelled) {
+        return;
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("native_language_code")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError || cancelled) {
+        return;
+      }
+
+      const code = profile?.native_language_code?.trim().toLowerCase() ?? null;
+      setNativeLanguageCode(code || null);
+    };
+
+    void loadNativeLanguage();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase]);
+
+  const isNativeLanguage = (code: string) =>
+    nativeLanguageCode !== null && code.toLowerCase() === nativeLanguageCode;
+
+  const pickerLanguages = useMemo(
+    () => KNOWN_LANGUAGES.filter((language) => !isNativeLanguage(language.code)),
+    [nativeLanguageCode]
+  );
+
+  useEffect(() => {
+    if (!nativeLanguageCode) return;
+    setSelectedKnownLanguages((current) =>
+      current.filter((entry) => entry.code.toLowerCase() !== nativeLanguageCode)
+    );
+  }, [nativeLanguageCode]);
 
   const selectedCodes = useMemo(
     () => new Set(selectedKnownLanguages.map((entry) => entry.code)),
@@ -49,17 +99,18 @@ export default function OnboardingStepThreePage() {
     return SEARCHABLE_LANGUAGES.filter(
       (language) =>
         !selectedCodes.has(language.code) &&
+        !isNativeLanguage(language.code) &&
         (language.name.toLowerCase().includes(query) || language.code.toLowerCase().includes(query))
     ).slice(0, 12);
-  }, [searchQuery, selectedCodes]);
+  }, [searchQuery, selectedCodes, nativeLanguageCode]);
 
   const extraSelectedRows = useMemo(() => {
     return selectedKnownLanguages
-      .filter((entry) => !KNOWN_CODES.has(entry.code))
+      .filter((entry) => !KNOWN_CODES.has(entry.code) && !isNativeLanguage(entry.code))
       .map((entry) => SEARCHABLE_LANGUAGES.find((language) => language.code === entry.code))
       .filter((language): language is LanguageOption => Boolean(language))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [selectedKnownLanguages]);
+  }, [selectedKnownLanguages, nativeLanguageCode]);
 
   const getKnownProficiency = (code: string) =>
     selectedKnownLanguages.find((entry) => entry.code === code)?.proficiency ?? "B1";
@@ -67,6 +118,8 @@ export default function OnboardingStepThreePage() {
   const isKnownSelected = (code: string) => selectedCodes.has(code);
 
   const toggleLanguage = (code: string) => {
+    if (isNativeLanguage(code)) return;
+
     if (isKnownSelected(code)) {
       setSelectedKnownLanguages((current) => current.filter((entry) => entry.code !== code));
       return;
@@ -85,7 +138,7 @@ export default function OnboardingStepThreePage() {
   };
 
   const addLanguageFromSearch = (language: LanguageOption) => {
-    if (selectedCodes.has(language.code)) return;
+    if (selectedCodes.has(language.code) || isNativeLanguage(language.code)) return;
     setSelectedKnownLanguages((current) => [
       ...current,
       { code: language.code, proficiency: "B1", referenceOnly: !KNOWN_CODES.has(language.code) }
@@ -117,13 +170,15 @@ export default function OnboardingStepThreePage() {
       return;
     }
 
-    const knownRows = selectedKnownLanguages.map((entry) => ({
-      user_id: user.id,
-      language_code: entry.code,
-      language_name: resolveLanguageName(entry.code),
-      proficiency: entry.proficiency,
-      is_reference_only: entry.referenceOnly
-    }));
+    const knownRows = selectedKnownLanguages
+      .filter((entry) => !isNativeLanguage(entry.code))
+      .map((entry) => ({
+        user_id: user.id,
+        language_code: entry.code,
+        language_name: resolveLanguageName(entry.code),
+        proficiency: entry.proficiency,
+        is_reference_only: entry.referenceOnly
+      }));
 
     const { error: insertError } = await supabase.from("known_languages").insert(knownRows);
 
@@ -257,7 +312,7 @@ export default function OnboardingStepThreePage() {
       </div>
 
       <div className="relative z-0 mt-6 space-y-3">
-        {KNOWN_LANGUAGES.map((language) => renderLanguageRow(language))}
+        {pickerLanguages.map((language) => renderLanguageRow(language))}
         {extraSelectedRows.map((language) => renderLanguageRow(language))}
       </div>
 
