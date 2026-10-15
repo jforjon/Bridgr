@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { IconX } from "@tabler/icons-react";
 import { useParams, useRouter } from "next/navigation";
 import BridgrPageLoading from "@/components/BridgrPageLoading";
+import { setupBeginnerCourseAndSkeleton } from "@/lib/beginner-course-flow";
 import { createClient } from "@/lib/supabase/client";
 import { SUPPORTED_LANGUAGES } from "@/types";
 
@@ -43,11 +44,11 @@ function isMultipleChoice(q: PlacementQuestionClient): boolean {
 
 function renderPromptWithTranslation(prompt: string) {
   const match = prompt.match(/^([\s\S]+?)\s*(\([^)]+\))\s*$/);
-  if (!match) return <p className="font-sans font-extrabold text-xl text-[var(--text-primary)]">{prompt}</p>;
+  if (!match) return <p className="font-sans font-semibold text-xl text-[var(--text-1)]">{prompt}</p>;
   return (
     <div>
-      <p className="font-sans font-extrabold text-xl text-[var(--text-primary)]">{match[1].trim()}</p>
-      <p className="mt-2 text-sm italic text-[var(--text-secondary)]">{match[2]}</p>
+      <p className="font-sans font-semibold text-xl text-[var(--text-1)]">{match[1].trim()}</p>
+      <p className="mt-2 text-sm italic text-[var(--text-2)]">{match[2]}</p>
     </div>
   );
 }
@@ -65,6 +66,7 @@ export default function PlacementTestPage() {
   /** Non-blocking notice when fewer than 10 questions were parsed (shown under the progress bar). */
   const [generateWarning, setGenerateWarning] = useState("");
   const [introGenerating, setIntroGenerating] = useState(false);
+  const [beginnerBuilding, setBeginnerBuilding] = useState(false);
   const [selfReportLevel, setSelfReportLevel] = useState<(typeof CEFR_SCALE)[number] | null>(null);
   const [selfReportSubmitting, setSelfReportSubmitting] = useState(false);
   const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
@@ -225,38 +227,17 @@ export default function PlacementTestPage() {
 
   const skipAsBeginner = useCallback(async () => {
     setError("");
+    setBeginnerBuilding(true);
     try {
-      const res = await fetch("/api/placement/submit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          skipped: true,
-          cefr_level: "A1",
-          language_code: languageCode,
-          language_name: languageName
-        })
+      await setupBeginnerCourseAndSkeleton({
+        languageCode,
+        languageName
       });
-      const data = (await res.json().catch(() => ({}))) as {
-        error?: string;
-        skipped?: boolean;
-        cefr_level?: string;
-      };
-      console.log("skip response:", res.status, data);
-      if (!res.ok) {
-        if (res.status === 401) {
-          router.push(`/login?redirectedFrom=/placement/${encodeURIComponent(languageCode)}`);
-          return;
-        }
-        setStage(1);
-        setError(data.error ?? "Could not save your choice.");
-        return;
-      }
       router.push("/learn");
-      console.log("router.push called");
-    } catch {
+    } catch (err) {
       setStage(1);
-      setError("Network error while saving.");
+      setError(err instanceof Error ? err.message : "Could not build your course.");
+      setBeginnerBuilding(false);
     }
   }, [languageCode, languageName, router]);
 
@@ -397,8 +378,8 @@ export default function PlacementTestPage() {
 
   if (!languageCode) {
     return (
-      <main className="min-h-screen bg-[var(--bg)] px-6 py-10">
-        <p className="text-sm text-red-400">Invalid language.</p>
+      <main className="px-page min-h-screen bg-[var(--bg)] py-10">
+        <p className="text-sm text-danger">Invalid language.</p>
       </main>
     );
   }
@@ -408,7 +389,7 @@ export default function PlacementTestPage() {
       <BridgrPageLoading title="Building your personal course" subtitle={null}>
         <p
           key={rotatingIndex}
-          className="mt-3 text-center text-sm text-[var(--text-secondary)] transition-opacity duration-500"
+          className="mt-3 text-center text-sm text-[var(--text-2)] transition-opacity duration-500"
         >
           {rotatingMessages[rotatingIndex]}
         </p>
@@ -436,59 +417,56 @@ export default function PlacementTestPage() {
 
   return (
     <main
-      className={`min-h-screen bg-[var(--bg)] px-5 ${stage === 1 ? "pt-0" : "pt-8"} ${stage === 2 ? "pb-32" : "pb-28"}`}
+      className={`px-page min-h-screen bg-[var(--bg)] ${stage === 1 ? "pt-0" : "pt-8"} ${stage === 2 ? "pb-32" : "pb-28"}`}
     >
       {stage === 1 ? (
         <>
-          <div className="flex items-center justify-between px-6 pt-6">
+          <div className="flex items-center justify-between pt-6">
             <button
               type="button"
               onClick={() => router.push("/learn")}
-              className="rounded-lg p-1 hover:bg-[var(--card)]"
+              className="rounded-lg p-1 hover:bg-[var(--surface-1)]"
               aria-label="Close"
             >
-              <IconX size={20} stroke={1.75} className="text-[var(--text-secondary)]" />
+              <IconX size={20} stroke={1.75} className="text-[var(--text-2)]" />
             </button>
             <div className="shrink-0" aria-hidden />
           </div>
           <section className="mx-auto max-w-lg">
-          <h1 className="font-sans font-extrabold text-3xl text-[var(--text-primary)]">Test your {languageName}</h1>
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">
+          <h1 className="font-sans font-semibold text-3xl text-[var(--text-1)]">Test your {languageName}</h1>
+          <p className="mt-3 text-sm text-[var(--text-2)]">
             30 questions to find your level. Writing items are optional. Takes about 10–15 minutes.
           </p>
 
-          <div className="mt-8 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--card)] px-3 py-3">
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-[var(--surface-1)] px-3 py-3">
             {CEFR_SCALE.map((level) => (
               <span
                 key={level}
-                className="min-w-[2.25rem] rounded-full border border-[var(--border)] bg-[var(--card-2)] py-2 text-center text-xs font-semibold text-[var(--text-secondary)]"
+                className="min-w-[2.25rem] rounded-full border border-[var(--border)] bg-[var(--surface-2)] py-2 text-center text-xs font-semibold text-[var(--text-2)]"
               >
                 {level}
               </span>
             ))}
           </div>
-          <p className="mt-2 text-xs text-[var(--text-secondary)]">A1 through C2 — where will you land?</p>
+          <p className="mt-2 text-xs text-[var(--text-2)]">A1 through C2 — where will you land?</p>
 
-          {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
           <div className="mt-10 flex flex-col gap-3">
                 <button
                   type="button"
                   onClick={() => void startTest()}
-                  className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
+                  className="btn-primary w-full"
                 >
                   Start placement test
                 </button>
                 <button
                   type="button"
-                  disabled={introGenerating}
-                  onClick={() => {
-                    setStage("generating");
-                    void skipAsBeginner();
-                  }}
-                  className="w-full rounded-full border border-[var(--border)] bg-[var(--card)] py-4 text-base font-extrabold text-[var(--text-secondary)] disabled:opacity-50"
+                  disabled={introGenerating || beginnerBuilding}
+                  onClick={() => void skipAsBeginner()}
+                  className="w-full rounded-full border border-[var(--border)] bg-[var(--surface-1)] py-4 text-base font-semibold text-[var(--text-2)] disabled:opacity-50"
                 >
-                  I&apos;m a complete beginner
+                  {beginnerBuilding ? "Building your course..." : "I\u2019m a complete beginner"}
                 </button>
               </div>
 
@@ -496,13 +474,13 @@ export default function PlacementTestPage() {
                 <div className="absolute inset-0 flex items-center" aria-hidden>
                   <div className="w-full border-t border-[var(--border)]" />
                 </div>
-                <div className="relative flex justify-center text-xs uppercase tracking-widest text-[var(--text-secondary)]">
+                <div className="relative flex justify-center text-xs uppercase tracking-widest text-[var(--text-2)]">
                   <span className="bg-[var(--bg)] px-3">or</span>
                 </div>
               </div>
 
               <div>
-                <p className="text-center text-sm font-medium text-[var(--text-primary)]">
+                <p className="text-center text-sm font-medium text-[var(--text-1)]">
                   I already know my CEFR level
                 </p>
                 <div className="mt-4 flex flex-wrap justify-center gap-2">
@@ -515,8 +493,8 @@ export default function PlacementTestPage() {
                         onClick={() => setSelfReportLevel(selected ? null : level)}
                         className={`rounded-full border px-4 py-2 text-sm transition-colors ${
                           selected
-                            ? "border-[var(--accent)] bg-[#BFFF00] text-[#2A3800]"
-                            : "border-[var(--border)] text-[var(--text-secondary)]"
+                            ? "border-[var(--accent-text)] bg-accent-fill text-accent-ink"
+                            : "border-[var(--border)] text-[var(--text-2)]"
                         }`}
                       >
                         {level}
@@ -529,7 +507,7 @@ export default function PlacementTestPage() {
                     type="button"
                     disabled={selfReportSubmitting}
                     onClick={() => void confirmSelfReportLevel()}
-                    className="mt-6 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+                    className="btn-primary mt-6 w-full"
                   >
                     {selfReportSubmitting ? "Saving…" : "Confirm my level"}
                   </button>
@@ -542,22 +520,22 @@ export default function PlacementTestPage() {
       {stage === 2 && currentQuestion ? (
         <>
           {exitConfirmOpen ? (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6">
-              <div className="w-full max-w-sm rounded-2xl bg-[var(--card)] p-6 text-center">
-                <p className="text-base font-extrabold text-[var(--text-primary)]">Exit the test?</p>
-                <p className="mt-2 text-sm text-[var(--text-secondary)]">Your progress will be lost.</p>
+            <div className="px-page fixed inset-0 z-50 flex items-center justify-center bg-[var(--scrim)]">
+              <div className="modal w-full max-w-sm text-center">
+                <p className="text-base font-semibold text-[var(--text-1)]">Exit the test?</p>
+                <p className="mt-2 text-sm text-[var(--text-2)]">Your progress will be lost.</p>
                 <div className="mt-6 flex flex-col gap-3">
                   <button
                     type="button"
                     onClick={() => setExitConfirmOpen(false)}
-                    className="w-full rounded-pill bg-[#BFFF00] py-3 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
+                    className="btn-primary w-full"
                   >
                     Keep going
                   </button>
                   <button
                     type="button"
                     onClick={() => router.push("/learn")}
-                    className="w-full rounded-full border border-[var(--border)] py-3 text-sm font-extrabold text-[var(--text-secondary)]"
+                    className="w-full rounded-full border border-[var(--border)] py-3 text-sm font-semibold text-[var(--text-2)]"
                   >
                     Exit test
                   </button>
@@ -566,20 +544,20 @@ export default function PlacementTestPage() {
             </div>
           ) : null}
 
-          <div className="sticky top-0 z-40 -mx-5 border-b border-[var(--border)] bg-[var(--bg)]/95 px-5 py-3 backdrop-blur">
+          <div className="px-page sticky top-0 z-40 -mx-6 border-b border-[var(--border)] bg-[var(--bg)]/95 py-3 backdrop-blur">
             <div className="mx-auto flex max-w-lg items-center justify-between">
               <button
                 type="button"
                 onClick={() => setExitConfirmOpen(true)}
-                className="rounded-lg p-1 hover:bg-[var(--card)]"
+                className="rounded-lg p-1 hover:bg-[var(--surface-1)]"
                 aria-label="Exit placement test"
               >
-                <IconX size={20} stroke={1.75} className="text-[var(--text-secondary)]" />
+                <IconX size={20} stroke={1.75} className="text-[var(--text-2)]" />
               </button>
               <button
                 type="button"
                 onClick={() => void handleFinishEarly()}
-                className="text-sm font-medium text-[var(--text-secondary)] underline"
+                className="text-sm font-medium text-[var(--text-2)] underline"
               >
                 Finish test
               </button>
@@ -588,13 +566,13 @@ export default function PlacementTestPage() {
 
         <section className="mx-auto max-w-lg">
           <div className="mb-6">
-            <div className="mb-1 flex justify-between text-xs text-[var(--text-secondary)]">
+            <div className="mb-1 flex justify-between text-xs text-[var(--text-2)]">
               <span>
                 {currentIndex + 1} of {totalQuestions}
               </span>
             </div>
-            <div className="h-[3px] w-full overflow-hidden rounded-pill bg-[var(--card-2)]">
-              <div className="h-full rounded-pill bg-[#BFFF00] hover:bg-[#A8E000] transition-all" style={{ width: `${progressPct}%` }} />
+            <div className="progress-bar h-[3px] w-full">
+              <div className="progress-bar__fill" style={{ width: `${progressPct}%` }} />
             </div>
             {generateWarning ? (
               <p className="mt-3 rounded-lg border border-amber/20 bg-amber/10 p-3 text-sm text-amber">
@@ -603,13 +581,13 @@ export default function PlacementTestPage() {
             ) : null}
           </div>
 
-          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[var(--text-secondary)]">
+          <p className="mb-2 text-xs font-bold uppercase tracking-widest text-[var(--text-2)]">
             {currentQuestion.section}
           </p>
           {renderPromptWithTranslation(currentQuestion.prompt)}
 
           {currentQuestion.context_text && currentQuestion.context_text.trim() ? (
-            <div className="mt-4 rounded-lg bg-[var(--card-2)] p-4 text-sm leading-relaxed text-[var(--text-secondary)]">
+            <div className="mt-4 rounded-lg bg-[var(--surface-2)] p-4 text-sm leading-relaxed text-[var(--text-2)]">
               {currentQuestion.context_text}
             </div>
           ) : null}
@@ -625,8 +603,8 @@ export default function PlacementTestPage() {
                     onClick={() => selectOption(opt)}
                     className={`w-full rounded-lg border py-4 px-4 text-left text-sm font-semibold transition-colors ${
                       selected
-                        ? "border-[var(--accent)] bg-[var(--card-2)] text-[var(--text-primary)]"
-                        : "border-[var(--border)] bg-[var(--card)] text-[var(--text-primary)]"
+                        ? "border-[var(--accent-text)] bg-[var(--surface-2)] text-[var(--text-1)]"
+                        : "border-[var(--border)] bg-[var(--surface-1)] text-[var(--text-1)]"
                     }`}
                   >
                     {opt}
@@ -647,28 +625,28 @@ export default function PlacementTestPage() {
                   }
                 }}
                 placeholder="Your answer"
-                className="w-full rounded-lg bg-[var(--card-2)] px-4 py-3 text-base text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none"
+                className="field-input"
               />
             </div>
           )}
 
-          {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
         </section>
 
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4">
+        <div className="px-page fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] py-4">
           <div className="mx-auto flex max-w-2xl flex-col gap-2">
             <button
               type="button"
               disabled={!canAdvance}
               onClick={() => void goNext()}
-              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+              className="btn-primary w-full"
             >
               {currentIndex >= totalQuestions - 1 ? "Finish" : "Next"}
             </button>
             <button
               type="button"
               onClick={() => void handleDontKnow()}
-              className="w-full cursor-pointer border-none bg-transparent py-1 text-center text-sm text-[var(--text-secondary)] underline"
+              className="w-full cursor-pointer border-none bg-transparent py-1 text-center text-sm text-[var(--text-2)] underline"
             >
               I don&apos;t know
             </button>
@@ -679,20 +657,20 @@ export default function PlacementTestPage() {
 
       {stage === 4 && submitResult ? (
         <section className="mx-auto max-w-lg text-center">
-          <p className="text-sm font-medium uppercase tracking-widest text-[var(--text-secondary)]">
+          <p className="text-sm font-medium uppercase tracking-widest text-[var(--text-2)]">
             Your {languageName} level
           </p>
-          <p className="mt-2 font-sans font-extrabold text-6xl text-[var(--accent)]">{submitResult.cefr_level}</p>
-          <p className="mt-6 text-base text-[var(--text-primary)]">
+          <p className="mt-2 font-sans font-semibold text-6xl text-[var(--accent-text)]">{submitResult.cefr_level}</p>
+          <p className="mt-6 text-base text-[var(--text-1)]">
             You answered {submitResult.score} of {submitResult.total} correctly
           </p>
 
-          {error ? <p className="mt-4 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mt-4 text-sm text-danger">{error}</p> : null}
 
           <button
             type="button"
             onClick={() => void finishAndOpenCourse()}
-            className="mt-10 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
+            className="btn-primary mt-10 w-full"
           >
             Start your personalised course
           </button>

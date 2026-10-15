@@ -26,6 +26,8 @@ export interface Profile {
   sessions_this_week: number;
   week_start_date: string;
   best_weekly_streak: number;
+  interests: string[];
+  vocabulary_coverage: Record<string, { total: number; known_threshold: number }>;
   created_at: string;
 }
 
@@ -57,6 +59,7 @@ export interface LearningLanguage {
   language_name: string;
   cefr_level: CEFRLevel;
   placement_completed: boolean;
+  goal: string | null;
   last_accessed_at: string | null;
   created_at: string;
 }
@@ -126,6 +129,10 @@ export interface Unit {
   order_index: number;
   status: "locked" | "available" | "completed";
   unlocked_at: string | null;
+  grammar_anchor: string | null;
+  situation_context: string | null;
+  cards_generated: boolean;
+  cards_generated_at: string | null;
 }
 
 export interface Lesson {
@@ -149,6 +156,8 @@ export interface Word {
   audio_url: string | null;
 }
 
+export type CardOutcome = "miss" | "struggle" | "solid";
+
 export interface Flashcard {
   id: string;
   user_id: string;
@@ -162,8 +171,53 @@ export interface Flashcard {
   language_code?: string | null;
   last_typed_answer?: string | null;
   typing_accuracy?: number | null;
+  sentence_card_id: string | null;
+  stage: 1 | 2 | 3;
+  last_outcome: CardOutcome | null;
+  solid_recall_count: number;
   words?: Word;
 }
+
+export interface SentenceCard {
+  id: string;
+  lesson_id: string | null;
+  language_code: string;
+  cefr_level: string;
+  target_item: string;
+  target_item_en: string;
+  english_sentence: string;
+  english_sentence_with_marker: string;
+  target_sentence: string;
+  correct_answer: string;
+  distractors: string[];
+  part_of_speech: string | null;
+  topic_key: string | null;
+  situation_context: string | null;
+  grammar_anchor: string | null;
+  cross_linguistic: {
+    cognates: { language_code: string; word: string; note: string }[];
+    false_friends: { language_code: string; word: string; confusion_note: string }[];
+    partial: { language_code: string; word: string; note: string }[];
+  };
+  created_at: string;
+}
+
+export interface FalseFriendAlert {
+  id: string;
+  language_code: string;
+  word: string;
+  known_language_code: string;
+  known_language_word: string;
+  known_language_meaning: string;
+  target_meaning: string;
+  alert_shown_to: string[];
+  created_at: string;
+}
+
+export type SessionCard =
+  | { type: "false_friend_alert"; alert: FalseFriendAlert }
+  | { type: "stage_1"; sentence_card: SentenceCard; flashcard_id: string }
+  | { type: "stage_2"; sentence_card: SentenceCard; flashcard_id: string };
 
 export interface Hint {
   id: string;
@@ -190,6 +244,28 @@ export interface LanguageOption {
   flag: string;
 }
 
+export const INTERESTS = [
+  { key: "food_cooking", label: "Food & cooking", emoji: "🍕" },
+  { key: "travel", label: "Travel", emoji: "✈️" },
+  { key: "work_business", label: "Work & business", emoji: "💼" },
+  { key: "family_relationships", label: "Family & relationships", emoji: "❤️" },
+  { key: "film_tv", label: "Film & TV", emoji: "🎬" },
+  { key: "books_culture", label: "Books & culture", emoji: "📚" },
+  { key: "music", label: "Music", emoji: "🎵" },
+  { key: "sport", label: "Sport", emoji: "⚽" },
+  { key: "nature_outdoors", label: "Nature & outdoors", emoji: "🌿" },
+  { key: "tech", label: "Tech", emoji: "💻" }
+] as const;
+
+export const GOALS = [
+  { key: "travel", label: "Travel & living abroad", emoji: "🧳" },
+  { key: "work_professional", label: "Work & professional", emoji: "💼" },
+  { key: "partner_family", label: "Partner or family", emoji: "❤️" },
+  { key: "study", label: "Study", emoji: "🎓" },
+  { key: "culture", label: "Culture, film & music", emoji: "🎭" },
+  { key: "curious", label: "Just curious", emoji: "💬" }
+] as const;
+
 export const WEEKLY_GOAL_OPTIONS: {
   value: WeeklyGoalOption;
   label: string;
@@ -213,6 +289,7 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
   { code: "fr", name: "French", flag: "🇫🇷" },
   { code: "de", name: "German", flag: "🇩🇪" },
   { code: "it", name: "Italian", flag: "🇮🇹" },
+  { code: "ca", name: "Catalan", flag: "" },
   { code: "pt", name: "Portuguese", flag: "🇵🇹" },
   { code: "nl", name: "Dutch", flag: "🇳🇱" },
   { code: "sv", name: "Swedish", flag: "🇸🇪" },

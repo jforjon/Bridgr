@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUPPORTED_LANGUAGES } from "@/types";
 
-const LESSON_MODEL = "claude-sonnet-4-5";
+const LESSON_MODEL = "claude-sonnet-4-5-20250929";
 
 export type KnownLanguageInput = {
   language_code: string;

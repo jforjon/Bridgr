@@ -8,9 +8,10 @@ import {
   IconHeadphones,
   IconMessages
 } from "@tabler/icons-react";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { createClient } from "@/lib/supabase/client";
 import type { LearningLanguage } from "@/types";
 
@@ -21,19 +22,43 @@ type TopicItem = {
   topic_name: string;
 };
 
-export default function PracticePage() {
+function PracticeSkeleton() {
+  return (
+    <div className="px-page animate-pulse" aria-hidden>
+      <div className="mt-8 h-8 w-36 rounded-md bg-card" />
+      <div className="mt-3 h-4 w-56 rounded-md bg-card" />
+      <div className="mt-6 flex gap-2">
+        <div className="h-10 w-32 rounded-pill bg-card" />
+        <div className="h-10 w-36 rounded-pill bg-card" />
+      </div>
+      <div className="mt-4 h-14 card" />
+      <div className="mt-6 space-y-3">
+        <div className="h-[88px] card" />
+        <div className="h-[88px] card" />
+        <div className="h-[88px] card" />
+      </div>
+    </div>
+  );
+}
+
+function PracticePageInner() {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedLang = searchParams.get("lang")?.toLowerCase().trim() ?? "";
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [mode, setMode] = useState<PracticeMode>("smart");
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [languages, setLanguages] = useState<LearningLanguage[]>([]);
   const [activeLanguage, setActiveLanguage] = useState<LearningLanguage | null>(null);
   const [topics, setTopics] = useState<TopicItem[]>([]);
   const [dueCount, setDueCount] = useState(0);
 
   useEffect(() => {
+    let cancelled = false;
+
     const load = async () => {
       setLoading(true);
       setError("");
@@ -47,20 +72,14 @@ export default function PracticePage() {
         return;
       }
 
-      const [{ data: learningRows, error: learningError }, { count: due, error: dueError }] =
-        await Promise.all([
-          supabase
-            .from("learning_languages")
-            .select("*")
-            .eq("user_id", user.id)
-            .order("last_accessed_at", { ascending: false, nullsFirst: false })
-            .order("created_at", { ascending: true }),
-          supabase
-            .from("flashcards")
-            .select("*", { count: "exact", head: true })
-            .eq("user_id", user.id)
-            .lte("next_review_date", new Date().toISOString().slice(0, 10))
-        ]);
+      const { data: learningRows, error: learningError } = await supabase
+        .from("learning_languages")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("last_accessed_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: true });
+
+      if (cancelled) return;
 
       if (learningError) {
         setError(learningError.message);
@@ -74,15 +93,30 @@ export default function PracticePage() {
         return;
       }
 
-      const active = learning[0];
+      const active =
+        learning.find((l) => l.language_code.toLowerCase() === requestedLang) ?? learning[0];
+      setLanguages(learning);
       setActiveLanguage(active);
-      setDueCount(dueError ? 0 : due ?? 0);
+      setSelectedTopic(null);
 
-      const { data: topicRows, error: topicsError } = await supabase
-        .from("curriculum_topics")
-        .select("topic_key, topic_name")
-        .eq("language_code", active.language_code)
-        .order("order_index", { ascending: true });
+      const [{ count: due, error: dueError }, { data: topicRows, error: topicsError }] =
+        await Promise.all([
+          supabase
+            .from("flashcards")
+            .select("*", { count: "exact", head: true })
+            .eq("user_id", user.id)
+            .eq("language_code", active.language_code)
+            .lte("next_review_date", new Date().toISOString().slice(0, 10)),
+          supabase
+            .from("curriculum_topics")
+            .select("topic_key, topic_name")
+            .eq("language_code", active.language_code)
+            .order("order_index", { ascending: true })
+        ]);
+
+      if (cancelled) return;
+
+      setDueCount(dueError ? 0 : due ?? 0);
 
       if (topicsError) {
         setError(topicsError.message);
@@ -99,17 +133,25 @@ export default function PracticePage() {
     };
 
     void load();
-  }, [router, supabase]);
+    return () => {
+      cancelled = true;
+    };
+  }, [router, supabase, requestedLang]);
 
   const reviewHref = useMemo(() => {
-    if (!selectedTopic) return "/practice/review";
-    return `/practice/review?topic=${encodeURIComponent(selectedTopic)}`;
-  }, [selectedTopic]);
+    const params = new URLSearchParams();
+    if (activeLanguage) params.set("lang", activeLanguage.language_code);
+    if (selectedTopic) params.set("topic", selectedTopic);
+    const qs = params.toString();
+    return qs ? `/practice/review?${qs}` : "/practice/review";
+  }, [selectedTopic, activeLanguage]);
 
   if (loading) {
     return (
       <>
-        <main className="bg-[var(--bg)] p-6 pb-24 text-sm text-[var(--text-secondary)]">Loading practice...</main>
+        <main className="mx-auto min-h-screen max-w-2xl bg-app pb-28">
+          <PracticeSkeleton />
+        </main>
         <BottomNav activeTab="practice" />
       </>
     );
@@ -118,7 +160,13 @@ export default function PracticePage() {
   if (error) {
     return (
       <>
-        <main className="bg-[var(--bg)] p-6 pb-24 text-sm text-red-400">{error}</main>
+        <main className="px-page mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center bg-app pb-28 text-center">
+          <p className="text-base font-semibold text-ink">Something went wrong</p>
+          <p className="mt-2 max-w-xs text-sm text-ink-secondary">{error}</p>
+          <button type="button" onClick={() => router.refresh()} className="btn-secondary mt-6">
+            Try again
+          </button>
+        </main>
         <BottomNav activeTab="practice" hasLearningLanguage={Boolean(activeLanguage)} />
       </>
     );
@@ -126,32 +174,47 @@ export default function PracticePage() {
 
   return (
     <>
-      <main className="min-h-screen bg-[var(--bg)] pb-24">
-        <header className="px-5 pt-8">
-          <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">Practice</h1>
-          <p className="mt-1 text-sm text-[var(--text-secondary)]">What do you want to work on?</p>
+      <main className="mx-auto min-h-screen max-w-2xl bg-app pb-32">
+        <header className="px-page flex items-start justify-between gap-4 pt-10">
+          <div className="min-w-0">
+            <p className="label-caps">Practice</p>
+            <h1 className="title-screen mt-1.5">
+              Keep your {activeLanguage?.language_name ?? "vocabulary"} sharp
+            </h1>
+          </div>
+          {activeLanguage ? (
+            <LanguageSwitcher languages={languages} activeCode={activeLanguage.language_code} />
+          ) : null}
         </header>
 
-        <section className="mt-6 px-5">
-          <div className="flex gap-2">
+        <section className="px-page mt-8">
+          <div
+            className="flex gap-7 border-b border-line"
+            role="tablist"
+            aria-label="Practice mode"
+          >
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "smart"}
               onClick={() => setMode("smart")}
-              className={`rounded-full px-4 py-2 text-sm font-bold ${
+              className={`-mb-px cursor-pointer border-b-2 pb-3 text-[15px] transition-colors duration-150 ${
                 mode === "smart"
-                  ? "bg-[#BFFF00] text-[#2A3800]"
-                  : "border border-[var(--border)] bg-transparent text-[var(--text-secondary)]"
+                  ? "border-[var(--accent-text)] font-semibold text-ink"
+                  : "border-transparent font-medium text-ink-tertiary hover:text-ink-secondary"
               }`}
             >
               Smart review
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={mode === "topic"}
               onClick={() => setMode("topic")}
-              className={`rounded-full px-4 py-2 text-sm font-bold ${
+              className={`-mb-px cursor-pointer border-b-2 pb-3 text-[15px] transition-colors duration-150 ${
                 mode === "topic"
-                  ? "bg-[#BFFF00] text-[#2A3800]"
-                  : "border border-[var(--border)] bg-transparent text-[var(--text-secondary)]"
+                  ? "border-[var(--accent-text)] font-semibold text-ink"
+                  : "border-transparent font-medium text-ink-tertiary hover:text-ink-secondary"
               }`}
             >
               Choose a topic
@@ -160,92 +223,137 @@ export default function PracticePage() {
         </section>
 
         {mode === "smart" ? (
-          <section className="mx-5 mt-4 rounded-lg bg-[var(--card)] p-3">
-            <p className="text-sm text-[var(--text-primary)]">
-              {dueCount > 0
-                ? `Your review queue: ${dueCount} words due today`
-                : "You're all caught up! Check back tomorrow."}
-            </p>
+          <section className="px-page">
+            <div className="flex items-baseline gap-4 border-b border-line py-6">
+              {dueCount > 0 ? (
+                <>
+                  <p className="type-serif shrink-0 text-[44px] font-medium leading-none text-ink">
+                    {dueCount}
+                  </p>
+                  <div className="min-w-0">
+                    <p className="text-[15px] font-medium text-ink">
+                      {dueCount === 1 ? "word ready" : "words ready"} for review
+                    </p>
+                    <p className="mt-0.5 text-[13px] text-ink-secondary">
+                      A few minutes brings them back.
+                    </p>
+                  </div>
+                </>
+              ) : (
+                <div>
+                  <p className="text-[15px] font-medium text-ink">Nothing due right now</p>
+                  <p className="mt-0.5 text-[13px] text-ink-secondary">
+                    Your memory is holding up — new reviews will queue as you learn.
+                  </p>
+                </div>
+              )}
+            </div>
           </section>
         ) : (
-          <section className="mt-4 flex flex-wrap gap-2 px-5">
-            {topics.map((topic) => {
-              const selected = selectedTopic === topic.topic_key;
-              return (
-                <button
-                  key={topic.topic_key}
-                  type="button"
-                  onClick={() => setSelectedTopic(topic.topic_key)}
-                  className={`cursor-pointer rounded-full border px-3 py-1.5 text-sm font-semibold ${
-                    selected
-                      ? "border-[var(--accent)] bg-[var(--card-2)] text-[var(--accent)]"
-                      : "border-[var(--border)] bg-transparent text-[var(--text-secondary)]"
-                  }`}
-                >
-                  {topic.topic_name}
-                </button>
-              );
-            })}
+          <section className="mx-page flex flex-wrap gap-2 border-b border-line py-6">
+            {topics.length === 0 ? (
+              <p className="text-sm text-ink-secondary">
+                No topics available for {activeLanguage?.language_name} yet.
+              </p>
+            ) : (
+              topics.map((topic) => {
+                const selected = selectedTopic === topic.topic_key;
+                return (
+                  <button
+                    key={topic.topic_key}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => setSelectedTopic(selected ? null : topic.topic_key)}
+                    className={`chip ${selected ? "chip--selected" : ""}`}
+                  >
+                    {topic.topic_name}
+                  </button>
+                );
+              })
+            )}
           </section>
         )}
 
-        <section className="mt-6 flex flex-col gap-3 px-5">
-          <Link
-            href={reviewHref}
-            className="flex items-center gap-4 rounded-lg bg-[var(--card)] p-5"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--card-2)]">
-              <IconCards size={24} className="text-[var(--accent)]" stroke={1.75} aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-bold text-[var(--text-primary)]">Flashcards</p>
-              <p className="text-sm text-[var(--text-secondary)]">Type the translation from memory</p>
-            </div>
-            <IconChevronRight size={20} stroke={1.75} className="text-[var(--text-secondary)]" />
-          </Link>
+        <section className="px-page">
+          <div className="divide-y divide-[var(--border)] border-b border-line">
+            <Link href={reviewHref} className="group flex cursor-pointer items-center gap-4 py-5">
+              <IconCards size={20} className="shrink-0 text-ink-tertiary" stroke={1.5} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[16px] font-semibold text-ink">Flashcards</p>
+                <p className="mt-0.5 text-[13px] text-ink-secondary">
+                  Type the translation from memory
+                </p>
+              </div>
+              <IconChevronRight
+                size={18}
+                stroke={1.5}
+                className="shrink-0 text-ink-tertiary transition-transform duration-150 group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
 
-          <Link
-            href="/practice/reading"
-            className="flex items-center gap-4 rounded-lg bg-[var(--card)] p-5"
-          >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--card-2)]">
-              <IconFileText size={24} className="text-[var(--text-secondary)]" stroke={1.75} aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-bold text-[var(--text-primary)]">Reading</p>
-              <p className="text-sm text-[var(--text-secondary)]">Read a passage, tap words to reveal</p>
-            </div>
-            <IconChevronRight size={20} stroke={1.75} className="text-[var(--text-secondary)]" />
-          </Link>
+            <Link
+              href={
+                activeLanguage
+                  ? `/practice/reading?lang=${encodeURIComponent(activeLanguage.language_code)}`
+                  : "/practice/reading"
+              }
+              className="group flex cursor-pointer items-center gap-4 py-5"
+            >
+              <IconFileText size={20} className="shrink-0 text-ink-tertiary" stroke={1.5} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[16px] font-semibold text-ink">Reading</p>
+                <p className="mt-0.5 text-[13px] text-ink-secondary">
+                  Read a passage, tap words to reveal
+                </p>
+              </div>
+              <IconChevronRight
+                size={18}
+                stroke={1.5}
+                className="shrink-0 text-ink-tertiary transition-transform duration-150 group-hover:translate-x-0.5"
+                aria-hidden
+              />
+            </Link>
 
-          <div className="relative flex items-center gap-4 rounded-lg bg-[var(--card)] p-5 opacity-60">
-            <span className="absolute right-4 top-4 rounded-full border border-[var(--border)] bg-[var(--card-2)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
-              Soon
-            </span>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--card)]">
-              <IconHeadphones size={24} className="text-[var(--text-secondary)]" stroke={1.75} aria-hidden />
+            <div className="flex items-center gap-4 py-5 opacity-45">
+              <IconHeadphones size={20} className="shrink-0 text-ink-tertiary" stroke={1.5} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[16px] font-semibold text-ink">Listening</p>
+                <p className="mt-0.5 text-[13px] text-ink-secondary">
+                  Train your ear with short clips
+                </p>
+              </div>
+              <span className="label-caps shrink-0">Soon</span>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-bold text-[var(--text-primary)]">Listening</p>
-              <p className="text-sm text-[var(--text-secondary)]">Coming soon</p>
-            </div>
-          </div>
 
-          <div className="relative flex items-center gap-4 rounded-lg bg-[var(--card)] p-5 opacity-60">
-            <span className="absolute right-4 top-4 rounded-full border border-[var(--border)] bg-[var(--card-2)] px-2 py-0.5 text-xs text-[var(--text-secondary)]">
-              Soon
-            </span>
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--card)]">
-              <IconMessages size={24} className="text-[var(--text-secondary)]" stroke={1.75} aria-hidden />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-base font-bold text-[var(--text-primary)]">Conversation</p>
-              <p className="text-sm text-[var(--text-secondary)]">Coming soon</p>
+            <div className="flex items-center gap-4 py-5 opacity-45">
+              <IconMessages size={20} className="shrink-0 text-ink-tertiary" stroke={1.5} aria-hidden />
+              <div className="min-w-0 flex-1">
+                <p className="text-[16px] font-semibold text-ink">Conversation</p>
+                <p className="mt-0.5 text-[13px] text-ink-secondary">
+                  Practise real dialogue at your level
+                </p>
+              </div>
+              <span className="label-caps shrink-0">Soon</span>
             </div>
           </div>
         </section>
       </main>
       <BottomNav activeTab="practice" hasLearningLanguage />
     </>
+  );
+}
+
+export default function PracticePage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="mx-auto min-h-screen max-w-2xl bg-app pb-28">
+          <PracticeSkeleton />
+        </main>
+      }
+    >
+      <PracticePageInner />
+    </Suspense>
   );
 }

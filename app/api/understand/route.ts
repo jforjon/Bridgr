@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 /** Cache table for this route only — `public.word_understanding` (see migration 009). */
 const WORD_UNDERSTANDING = "word_understanding" as const;
 
-const MODEL = "claude-haiku-4-5";
+const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 500;
 
 const SYSTEM_PROMPT =

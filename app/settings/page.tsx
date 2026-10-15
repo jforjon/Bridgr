@@ -226,40 +226,40 @@ export default function SettingsPage() {
 
   if (loading || !profile) {
     return (
-      <main className="bg-[var(--bg)] p-6 text-sm text-[var(--text-secondary)]">Loading settings...</main>
+      <main className="bg-[var(--bg)] p-6 text-sm text-[var(--text-2)]">Loading settings...</main>
     );
   }
 
   const inputClass =
-    "w-full rounded-pill border-none bg-[var(--card-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
+    "field-input";
 
   return (
     <main className="min-h-screen bg-[var(--bg)] pb-8">
-      <header className="relative flex items-center justify-center px-5 pt-8">
+      <header className="px-page relative flex items-center justify-center pt-8">
         <Link
           href="/profile"
-          className="absolute left-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--card)] text-[var(--text-secondary)]"
+          className="absolute left-5 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[var(--border)] bg-[var(--surface-1)] text-[var(--text-2)]"
           aria-label="Back to profile"
         >
           <ArrowLeft className="h-4 w-4" />
         </Link>
-        <h1 className="font-sans text-xl font-extrabold text-[var(--text-primary)]">Settings</h1>
+        <h1 className="font-sans text-xl font-semibold text-[var(--text-1)]">Settings</h1>
       </header>
 
-      <section className="mx-5 mt-6 rounded-xl bg-[var(--card)] p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Account</h2>
+      <section className="mx-page mt-6 rounded-xl bg-[var(--surface-1)] p-5">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-2)]">Account</h2>
 
         <div className="mb-4 border-b border-[var(--border)]/20 pb-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--text-secondary)]">Name</p>
+            <p className="text-sm text-[var(--text-2)]">Name</p>
             {!editName ? (
-              <button type="button" onClick={() => setEditName(true)} className="text-sm font-extrabold text-[var(--accent)]">
+              <button type="button" onClick={() => setEditName(true)} className="text-sm font-semibold text-[var(--accent-text)]">
                 Edit
               </button>
             ) : null}
           </div>
           {!editName ? (
-            <p className="mt-1 text-base font-bold text-[var(--text-primary)]">{profile.name || "Not set"}</p>
+            <p className="mt-1 text-base font-bold text-[var(--text-1)]">{profile.name || "Not set"}</p>
           ) : (
             <div className="mt-2 flex gap-2">
               <input
@@ -271,7 +271,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void saveName()}
                 disabled={saving}
-                className="shrink-0 rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+                className="btn-primary shrink-0"
               >
                 Save
               </button>
@@ -281,15 +281,15 @@ export default function SettingsPage() {
 
         <div className="mb-4 border-b border-[var(--border)]/20 pb-4">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--text-secondary)]">Email</p>
+            <p className="text-sm text-[var(--text-2)]">Email</p>
             {!editEmail ? (
-              <button type="button" onClick={() => setEditEmail(true)} className="text-sm font-extrabold text-[var(--accent)]">
+              <button type="button" onClick={() => setEditEmail(true)} className="text-sm font-semibold text-[var(--accent-text)]">
                 Change
               </button>
             ) : null}
           </div>
           {!editEmail ? (
-            <p className="mt-1 text-base font-bold text-[var(--text-primary)]">{email}</p>
+            <p className="mt-1 text-base font-bold text-[var(--text-1)]">{email}</p>
           ) : (
             <div className="mt-2 flex gap-2">
               <input
@@ -302,7 +302,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void saveEmail()}
                 disabled={saving}
-                className="shrink-0 rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+                className="btn-primary shrink-0"
               >
                 Save
               </button>
@@ -312,11 +312,11 @@ export default function SettingsPage() {
 
         <div>
           <div className="flex items-center justify-between">
-            <p className="text-sm text-[var(--text-secondary)]">Password</p>
+            <p className="text-sm text-[var(--text-2)]">Password</p>
             <button
               type="button"
               onClick={() => setShowPasswordForm((current) => !current)}
-              className="text-sm font-extrabold text-[var(--accent)]"
+              className="text-sm font-semibold text-[var(--accent-text)]"
             >
               Change password
             </button>
@@ -348,7 +348,7 @@ export default function SettingsPage() {
                 type="button"
                 onClick={() => void savePassword()}
                 disabled={saving}
-                className="rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+                className="btn-primary"
               >
                 Save password
               </button>
@@ -357,18 +357,18 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      <section className="mx-5 mt-4 rounded-xl bg-[var(--card)] p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Learning</h2>
+      <section className="mx-page mt-4 rounded-xl bg-[var(--surface-1)] p-5">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-2)]">Learning</h2>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-[var(--text-secondary)]">Weekly goal</p>
+          <p className="text-sm text-[var(--text-2)]">Weekly goal</p>
           {!editWeeklyGoal ? (
-            <button type="button" onClick={() => setEditWeeklyGoal(true)} className="text-sm font-extrabold text-[var(--accent)]">
+            <button type="button" onClick={() => setEditWeeklyGoal(true)} className="text-sm font-semibold text-[var(--accent-text)]">
               Edit
             </button>
           ) : null}
         </div>
         {!editWeeklyGoal ? (
-          <p className="mt-1 text-base font-bold text-[var(--text-primary)]">{weeklyGoalLabel}</p>
+          <p className="mt-1 text-base font-bold text-[var(--text-1)]">{weeklyGoalLabel}</p>
         ) : (
           <div className="mt-3 space-y-2">
             {WEEKLY_GOAL_OPTIONS.map((option) => {
@@ -379,11 +379,11 @@ export default function SettingsPage() {
                   type="button"
                   onClick={() => setWeeklyGoalDraft(option.value)}
                   className={`block w-full rounded-xl border p-3 text-left ${
-                    selected ? "border-[var(--accent)]/50 bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card-2)]"
+                    selected ? "border-[var(--accent-text)]/50 bg-[var(--surface-2)]" : "border-[var(--border)] bg-[var(--surface-2)]"
                   }`}
                 >
-                  <p className="text-sm font-bold text-[var(--text-primary)]">{option.label}</p>
-                  <p className="text-xs text-[var(--text-secondary)]">{option.description}</p>
+                  <p className="field-label">{option.label}</p>
+                  <p className="text-xs text-[var(--text-2)]">{option.description}</p>
                 </button>
               );
             })}
@@ -391,7 +391,7 @@ export default function SettingsPage() {
               type="button"
               onClick={() => void saveWeeklyGoal()}
               disabled={saving}
-              className="rounded-pill bg-[#BFFF00] px-4 py-2 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+              className="btn-primary"
             >
               Save weekly goal
             </button>
@@ -399,15 +399,15 @@ export default function SettingsPage() {
         )}
       </section>
 
-      <section className="mx-5 mt-4 rounded-xl bg-[var(--card)] p-5">
-        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">Notifications</h2>
+      <section className="mx-page mt-4 rounded-xl bg-[var(--surface-1)] p-5">
+        <h2 className="mb-4 text-xs font-bold uppercase tracking-wider text-[var(--text-2)]">Notifications</h2>
         <div className="flex items-center justify-between">
-          <p className="text-sm text-[var(--text-secondary)]">Practice reminders</p>
+          <p className="text-sm text-[var(--text-2)]">Practice reminders</p>
           <button
             type="button"
             onClick={() => setNotificationEnabled((current) => !current)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition ${
-              notificationEnabled ? "bg-[#BFFF00]" : "bg-[var(--card-2)]"
+              notificationEnabled ? "bg-accent-fill" : "bg-[var(--surface-2)]"
             }`}
           >
             <span
@@ -428,10 +428,10 @@ export default function SettingsPage() {
                     key={day}
                     type="button"
                     onClick={() => toggleDay(day)}
-                    className={`rounded-full border px-3 py-1.5 text-sm font-extrabold ${
+                    className={`rounded-full border px-3 py-1.5 text-sm font-semibold ${
                       selected
-                        ? "border-[var(--accent)] bg-[#BFFF00] text-[#2A3800]"
-                        : "border-[var(--border)] text-[var(--text-secondary)]"
+                        ? "border-[var(--accent-text)] bg-accent-fill text-accent-ink"
+                        : "border-[var(--border)] text-[var(--text-2)]"
                     }`}
                   >
                     {day}
@@ -452,43 +452,43 @@ export default function SettingsPage() {
           type="button"
           onClick={() => void saveNotifications()}
           disabled={saving}
-          className="mt-4 rounded-full bg-[var(--card-2)] px-4 py-2 text-sm font-extrabold text-[var(--accent)] disabled:opacity-50"
+          className="mt-4 rounded-full bg-[var(--surface-2)] px-4 py-2 text-sm font-semibold text-[var(--accent-text)] disabled:opacity-50"
         >
           Save notifications
         </button>
       </section>
 
-      <section className="mt-8 px-5">
+      <section className="px-page mt-8">
         <button
           type="button"
           onClick={() => void signOut()}
-          className="w-full rounded-full border border-[var(--border)] py-3 text-sm font-extrabold text-[var(--text-secondary)]"
+          className="w-full rounded-full border border-[var(--border)] py-3 text-sm font-semibold text-[var(--text-2)]"
         >
           Sign out
         </button>
         <button
           type="button"
           onClick={() => setDeleteConfirmOpen(true)}
-          className="mt-4 block w-full text-center text-sm font-bold text-red-400 underline"
+          className="mt-4 block w-full text-center text-sm font-bold text-danger underline"
         >
           Delete account
         </button>
       </section>
 
-      {success ? <p className="mt-4 px-5 text-sm font-bold text-[var(--accent)]">{success}</p> : null}
-      {error ? <p className="mt-2 px-5 text-sm text-red-400">{error}</p> : null}
+      {success ? <p className="px-page mt-4 text-sm font-bold text-[var(--accent-text)]">{success}</p> : null}
+      {error ? <p className="px-page mt-2 text-sm text-danger">{error}</p> : null}
 
       {deleteConfirmOpen ? (
         <div
-          className="fixed inset-0 z-50 bg-black/40 px-4 pt-40"
+          className="px-page fixed inset-0 z-50 bg-[var(--scrim)] pt-40"
           onClick={() => !deleting && setDeleteConfirmOpen(false)}
         >
           <div
-            className="mx-auto max-w-sm rounded-xl bg-[var(--card)] p-6 shadow-xl"
+            className="modal mx-auto max-w-sm"
             onClick={(event) => event.stopPropagation()}
           >
-            <h2 className="font-sans text-xl font-extrabold text-[var(--text-primary)]">Delete account?</h2>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">
+            <h2 className="font-sans text-xl font-semibold text-[var(--text-1)]">Delete account?</h2>
+            <p className="mt-2 text-sm text-[var(--text-2)]">
               This permanently removes your profile, progress, and account. This action cannot be undone.
             </p>
             <div className="mt-6 flex gap-3">
@@ -496,7 +496,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => setDeleteConfirmOpen(false)}
-                className="flex-1 rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-extrabold text-[var(--text-secondary)] disabled:opacity-50"
+                className="flex-1 rounded-full border border-[var(--border)] px-5 py-2.5 text-sm font-semibold text-[var(--text-2)] disabled:opacity-50"
               >
                 Cancel
               </button>
@@ -504,7 +504,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={deleting}
                 onClick={() => void deleteAccount()}
-                className="flex-1 rounded-full bg-red-600 px-5 py-2.5 text-sm font-extrabold text-[var(--text-primary)] disabled:opacity-50"
+                className="flex-1 rounded-full bg-red-600 px-5 py-2.5 text-sm font-semibold text-[var(--text-1)] disabled:opacity-50"
               >
                 {deleting ? "Deleting..." : "Delete"}
               </button>

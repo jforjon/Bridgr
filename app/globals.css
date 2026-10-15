@@ -1,47 +1,333 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Sans:opsz,wght@9..40,400..700&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
-@tailwind utilities;
 
+/*
+ * Bridgr design system — "Studio · lime · Bricolage + DM Sans".
+ *
+ * Colour is a two-layer system. PALETTES are numbered, mode-agnostic, and
+ * never referenced directly from a component. SEMANTIC ALIASES carry the same
+ * names in both modes and point at different palette steps — so a component is
+ * written once and themed by swapping the alias map.
+ *
+ * Dark is the primary mode (the app was designed in it); light is a full
+ * inversion. Lime is a fill, never type: lime type or 1px lines use
+ * --accent-text, and every accent fill carries --accent-on-fill.
+ */
+
+/* ── 01 · Palettes — mode-agnostic, never used directly ─────────────────── */
 :root {
-  /* Accent */
-  --lime: #bfff00;
-  --lime-light: #6b8c00;
-  --lime-text: #2a3800;
-  --lime-pressed: #a8e000;
+  --grey-0: #ffffff;
+  --grey-50: #f4f4f1;
+  --grey-100: #ecece8;
+  --grey-200: #dcdcd7;
+  --grey-300: #c4c4be;
+  --grey-350: #b4b7bc;
+  --grey-400: #a0a2a6;
+  --grey-500: #8e9196;
+  --grey-600: #6a6c70;
+  --grey-650: #5a5d62;
+  --grey-700: #4a4c50;
+  --grey-800: #2f3338;
+  --grey-850: #23262a;
+  --grey-900: #1a1c1f;
+  --grey-950: #16171a;
+  --grey-1000: #101113;
 
-  /* Semantic */
-  --danger: #e53935;
-  --success: #2e7d32;
-  --warning: #f59e0b;
+  --lime-50: #f7fbe7;
+  --lime-100: #ecf8be;
+  --lime-200: #e1f78e;
+  --lime-300: #e0ff62;
+  --lime-400: #d6f84c;
+  --lime-500: #c2e43a;
+  --lime-600: #9ac93c;
+  --lime-700: #4e7040;
+  --lime-800: #2b3d2b;
+  --lime-900: #1f2c1f;
+  --lime-950: #131813;
+
+  --danger-50: #fbe5e8;
+  --danger-100: #f7c9cf;
+  --danger-200: #f09aa5;
+  --danger-300: #ea6e7e;
+  --danger-400: #e3455a;
+  --danger-500: #d0304a;
+  --danger-600: #bd2438;
+  --danger-700: #971c2c;
+  --danger-800: #6b1420;
+  --danger-900: #3a0e14;
+  --danger-950: #291318;
+
+  --success-50: #e6f3ea;
+  --success-100: #c6e6d2;
+  --success-200: #93d2ae;
+  --success-300: #63c68a;
+  --success-400: #3fbf6a;
+  --success-500: #29a055;
+  --success-600: #17743f;
+  --success-700: #115c32;
+  --success-800: #0c4023;
+  --success-900: #08281a;
+  --success-950: #12241a;
+
+  --warning-50: #fbeeda;
+  --warning-100: #f8dcb0;
+  --warning-200: #f5c070;
+  --warning-300: #ffb020;
+  --warning-400: #f5902a;
+  --warning-500: #dc761a;
+  --warning-600: #b04e08;
+  --warning-700: #8a3d06;
+  --warning-800: #5e2a05;
+  --warning-900: #3a1b04;
+  --warning-950: #2e2412;
+
+  /* ── 03 · Space, radii, motion — identical in both modes ──────────────── */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  --radius-badge: 8px;
+  --radius-control: 16px;
+  --radius-surface: 24px;
+  --radius-full: 9999px;
+
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.5, 0, 0.3, 1);
+  --ease-spring: cubic-bezier(0.3, 1.3, 0.5, 1);
+
+  /* The system is flat: depth comes from surface steps, not shadow. */
+  --shadow-accent: none;
 }
 
-/* Dark mode (default) */
+/* ── 01 · Semantic aliases — light (:root default) ──────────────────────── */
 :root,
-.dark {
-  --bg: #1a1a1a;
-  --card: #242424;
-  --card-2: #2e2e2e;
-  --border: rgba(255, 255, 255, 0.07);
-  --text-primary: #f0f0f0;
-  --text-secondary: rgba(255, 255, 255, 0.32);
-  --text-disabled: rgba(255, 255, 255, 0.16);
-  --accent: #bfff00;
-  --accent-fill: #bfff00;
+.light {
+  --bg: var(--grey-100);
+  --surface-1: var(--grey-0);
+  --surface-2: var(--grey-50);
+  --surface-3: var(--grey-100);
+  --border: var(--grey-200);
+  --border-strong: var(--grey-300);
+
+  --text-1: var(--lime-800);
+  --text-2: var(--grey-700);
+  --text-3: var(--grey-600);
+  --text-disabled: var(--grey-400);
+
+  --accent-fill: var(--lime-500);
+  --accent-fill-hover: var(--lime-600);
+  --accent-fill-active: var(--lime-700);
+  --accent-on-fill: var(--lime-800);
+  /* Pressed lime-700 is dark enough to take white. */
+  --accent-on-fill-active: var(--grey-0);
+  --accent-text: var(--lime-900);
+  --accent-graph: var(--lime-500);
+  --accent-subtle: var(--lime-50);
+
+  --danger: var(--danger-600);
+  --danger-hover: var(--danger-700);
+  --danger-active: var(--danger-800);
+  --danger-subtle: var(--danger-50);
+  --danger-on-subtle: var(--danger-700);
+
+  --success: var(--success-600);
+  --success-hover: var(--success-700);
+  --success-active: var(--success-800);
+  --success-subtle: var(--success-50);
+  --success-on-subtle: var(--success-700);
+
+  /* Orange on light, not amber, so it holds 4.5:1. */
+  --warning: var(--warning-600);
+  --warning-hover: var(--warning-700);
+  --warning-active: var(--warning-800);
+  --warning-subtle: var(--warning-50);
+  --warning-on-subtle: var(--warning-700);
+
+  --scrim: rgba(22, 23, 26, 0.44);
+  --shadow-pop: 0 12px 28px -14px rgba(22, 23, 26, 0.28);
+
+  /* Component-level tokens: the few places where the two modes reach for
+     different roles rather than different steps of the same role. */
+  --focus-ring: var(--lime-500);
+  --focus-ring-neutral: var(--grey-600);
+  --disabled-fill: #e4e4df;
+  --disabled-text: var(--grey-400);
+  --field-bg: var(--surface-1);
+  --field-disabled-bg: #f0f0ec;
+  --field-disabled-border: #e4e4df;
+  --btn-secondary-bg: var(--surface-1);
+  --btn-secondary-bg-hover: var(--surface-2);
+  --btn-secondary-border: var(--border);
+  --btn-icon-bg: var(--surface-1);
+  --chip-bg: var(--surface-1);
+  --chip-border: transparent;
+  --chip-disabled-bg: #f0f0ec;
+  --badge-bg: rgba(194, 228, 58, 0.3);
+  --badge-border: var(--lime-900);
+  --badge-neutral-bg: rgba(22, 23, 26, 0.06);
+  --badge-neutral-border: var(--grey-300);
+  --danger-solid: var(--danger-500);
+  --modal-border: transparent;
+  --toast-bg: var(--grey-950);
+  --toast-text: var(--grey-50);
+  --toast-accent: var(--lime-400);
+  --segment-track: var(--surface-1);
+  --segment-active-bg: var(--grey-950);
+  --segment-active-text: var(--grey-50);
+  --tab-underline: var(--grey-950);
+  --skeleton: #e0e0da;
+  /* The nav bar stays dark on light screens — it is a floating object, not a
+     surface — so lime still never carries type. */
+  --navbar-bg: var(--grey-950);
+  --navbar-active-bg: var(--surface-1);
+  --navbar-active-text: var(--grey-950);
+  --navbar-idle: var(--grey-500);
+  --fab-bg: var(--grey-950);
+  --fab-glyph: var(--lime-400);
+  --track: var(--grey-200);
+  --toggle-off: #e9e9ea;
+
+  /* The hero is an image stage — dark in BOTH modes — so anything drawn over it
+     keeps light-on-image values regardless of theme. */
+  --hero-scrim: linear-gradient(
+    180deg,
+    rgba(16, 17, 19, 0.5) 0%,
+    rgba(16, 17, 19, 0) 34%,
+    rgba(16, 17, 19, 0.86) 100%
+  );
+  --pip-empty: rgba(244, 244, 241, 0.24);
+  --rail-idle: var(--grey-300);
+  --cta-trailing-bg: var(--lime-900);
 }
 
-/* Light mode */
-.light {
-  --bg: #ffffff;
-  --card: #f4f4f4;
-  --card-2: #ebebeb;
-  --border: rgba(0, 0, 0, 0.07);
-  --text-primary: #111111;
-  --text-secondary: rgba(0, 0, 0, 0.32);
-  --text-disabled: rgba(0, 0, 0, 0.16);
-  --accent: #111111;
-  --accent-fill: #bfff00;
+/* ── 01 · Semantic aliases — dark (the primary mode) ────────────────────── */
+.dark {
+  --bg: var(--grey-1000);
+  --surface-1: var(--grey-900);
+  --surface-2: var(--grey-850);
+  --surface-3: var(--lime-800);
+  --border: var(--grey-800);
+  --border-strong: var(--grey-700);
+
+  --text-1: var(--grey-50);
+  --text-2: var(--grey-350);
+  --text-3: var(--grey-500);
+  --text-disabled: var(--grey-650);
+
+  --accent-fill: var(--lime-400);
+  --accent-fill-hover: var(--lime-300);
+  --accent-fill-active: var(--lime-500);
+  --accent-on-fill: var(--lime-800);
+  --accent-on-fill-active: var(--lime-800);
+  --accent-text: var(--lime-400);
+  --accent-graph: var(--lime-400);
+  --accent-subtle: var(--lime-950);
+
+  --danger: var(--danger-400);
+  --danger-hover: var(--danger-300);
+  --danger-active: var(--danger-500);
+  --danger-subtle: var(--danger-950);
+  --danger-on-subtle: var(--danger-200);
+
+  --success: var(--success-400);
+  --success-hover: var(--success-300);
+  --success-active: var(--success-500);
+  --success-subtle: var(--success-950);
+  --success-on-subtle: var(--success-200);
+
+  /* Amber on dark. */
+  --warning: var(--warning-300);
+  --warning-hover: var(--warning-200);
+  --warning-active: var(--warning-400);
+  --warning-subtle: var(--warning-950);
+  --warning-on-subtle: var(--warning-200);
+
+  --scrim: rgba(0, 0, 0, 0.64);
+  /* Dark modals use a hairline instead of a shadow. */
+  --shadow-pop: none;
+
+  --focus-ring: var(--lime-500);
+  --focus-ring-neutral: var(--grey-600);
+  --disabled-fill: var(--grey-850);
+  --disabled-text: var(--grey-650);
+  --field-bg: var(--surface-1);
+  --field-disabled-bg: var(--grey-950);
+  --field-disabled-border: var(--grey-850);
+  --btn-secondary-bg: var(--surface-2);
+  --btn-secondary-bg-hover: var(--grey-800);
+  --btn-secondary-border: var(--border);
+  --btn-icon-bg: var(--surface-2);
+  --chip-bg: transparent;
+  --chip-border: var(--border);
+  --chip-disabled-bg: transparent;
+  --badge-bg: rgba(194, 228, 58, 0.16);
+  --badge-border: var(--lime-700);
+  --badge-neutral-bg: rgba(180, 183, 188, 0.12);
+  --badge-neutral-border: var(--grey-700);
+  --danger-solid: var(--danger-500);
+  --modal-border: var(--border);
+  --toast-bg: var(--grey-50);
+  --toast-text: var(--grey-950);
+  --toast-accent: var(--lime-800);
+  --segment-track: var(--surface-1);
+  --segment-active-bg: var(--accent-fill);
+  --segment-active-text: var(--accent-on-fill);
+  --tab-underline: var(--accent-fill);
+  --skeleton: var(--grey-850);
+  --navbar-bg: var(--surface-2);
+  --navbar-active-bg: var(--grey-100);
+  --navbar-active-text: var(--grey-950);
+  --navbar-idle: var(--grey-500);
+  --fab-bg: var(--accent-fill);
+  --fab-glyph: var(--grey-950);
+  --track: var(--grey-800);
+  --toggle-off: #39393d;
+
+  --hero-scrim: linear-gradient(
+    180deg,
+    rgba(16, 17, 19, 0.55) 0%,
+    rgba(16, 17, 19, 0) 34%,
+    rgba(16, 17, 19, 0.88) 100%
+  );
+  --pip-empty: var(--grey-800);
+  --rail-idle: var(--grey-700);
+  --cta-trailing-bg: var(--grey-950);
+}
+
+/* Values that are identical in both modes because the surface they sit on is
+   identical in both modes (the hero image, or a lime fill). */
+:root {
+  --text-on-image-1: var(--grey-50);
+  --text-on-image-2: var(--grey-350);
+  --accent-on-image: var(--lime-400);
+  --accent-on-fill-2: var(--lime-700);
+}
+
+@keyframes rise {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bridgr-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .week-pip--filled {
@@ -49,11 +335,7 @@
 }
 
 .week-pip--empty {
-  background-color: #3a3a3a;
-}
-
-.light .week-pip--empty {
-  background-color: #dcdcdc;
+  background-color: var(--surface-2);
 }
 
 @layer base {
@@ -64,17 +346,1202 @@
   html,
   body {
     background-color: var(--bg);
-    color: var(--text-primary);
-    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    color: var(--text-1);
+    font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Keyboard users get one focus treatment everywhere: a 2px ring held off the
+     control by 2px of canvas. Components that draw their own ring opt out. */
+  :where(a, button, input, select, textarea, [role='button'], [tabindex]):focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+
+  /* Tabular numerals in stats and timers, proportional elsewhere. */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-@layer components {
+@layer utilities {
+  .text-muted {
+    color: var(--text-2);
+  }
+}
+
+/*
+ * The component library sits between `@tailwind components` and
+ * `@tailwind utilities` as plain CSS rather than inside `@layer components`:
+ * Tailwind tree-shakes custom CSS in that layer against the content scan, which
+ * would drop every class no screen has adopted yet. Source order still puts
+ * utilities last, so a utility always overrides a system class.
+ */
+
+/* ── 02 · Type ──────────────────────────────────────────────────────────
+     Bricolage only where the content is the language itself: names, the word
+     being learned, single big numerals. Never for UI labels, never below 20px.
+     DM Sans for all interface text. Plex Mono only for .label-caps. */
+
+  .type-display {
+    font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+  }
+
+  .display-1 {
+    font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: 48px;
+    line-height: 56px;
+  }
+
+  .display-2 {
+    font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: 32px;
+    line-height: 40px;
+  }
+
+  .title-1 {
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-1);
+  }
+
+  .title-2 {
+    font-size: 24px;
+    line-height: 32px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-1);
+  }
+
+  .title-3 {
+    font-size: 20px;
+    line-height: 28px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--text-1);
+  }
+
+  .body-lg {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+  }
+
+  /* 16/24 is the default, and the smallest size for anything a learner reads. */
+  .body {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .caption {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-2);
+  }
+
+  /* 12px is the floor, and only for this. */
+  .label-caps {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+
+  /* Deprecated aliases from the previous system. */
+  .type-serif {
+    font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.03em;
+  }
+
+  .title-screen {
+    font-size: 32px;
+    line-height: 40px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-1);
+  }
+
+  /* ── 03 · Layout ────────────────────────────────────────────────────────
+     8px scale, no other values. 4 is the only half-step and never separates
+     two blocks. Control heights follow it too: 32 / 40 / 48 / 56. */
+
+  .px-page {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .mx-page {
+    margin-left: 24px;
+    margin-right: 24px;
+  }
+
+  .tap-target {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* ── 04 · Buttons ───────────────────────────────────────────────────────
+     Every button is a pill. Two buttons side by side always share one radius. */
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-quiet,
+  .btn-destructive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    font-size: 16px;
+    line-height: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out), box-shadow var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+
+  .btn-primary {
+    padding: 0 22px;
+    font-weight: 700;
+    background-color: var(--accent-fill);
+    color: var(--accent-on-fill);
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--accent-fill-hover);
+  }
+
+  .btn-primary:active:not(:disabled) {
+    background-color: var(--accent-fill-active);
+    color: var(--accent-on-fill-active);
+    transform: scale(0.97);
+  }
+
+  .btn-primary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus-ring);
+  }
+
+  .btn-primary:disabled {
+    background-color: var(--disabled-fill);
+    color: var(--disabled-text);
+    pointer-events: none;
+  }
+
+  .btn-secondary {
+    padding: 0 24px;
+    font-weight: 500;
+    background-color: var(--btn-secondary-bg);
+    color: var(--text-1);
+  }
+
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--btn-secondary-bg-hover);
+    box-shadow: inset 0 0 0 1px var(--btn-secondary-border);
+  }
+
+  .btn-secondary:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+
+  .btn-secondary:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus-ring-neutral);
+  }
+
+  .btn-secondary:disabled {
+    background-color: var(--disabled-fill);
+    color: var(--disabled-text);
+    pointer-events: none;
+  }
+
+  /* Text only, until it is hovered. */
+  .btn-quiet {
+    padding: 0 24px;
+    font-weight: 500;
+    background-color: transparent;
+    color: var(--text-2);
+  }
+
+  .btn-quiet:hover:not(:disabled) {
+    color: var(--text-1);
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+
+  .btn-quiet:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus-ring-neutral);
+  }
+
+  .btn-quiet:disabled {
+    color: var(--text-disabled);
+    pointer-events: none;
+  }
+
+  /* Identical on both themes — danger-500 throughout. */
+  .btn-destructive {
+    padding: 0 24px;
+    font-weight: 600;
+    background-color: transparent;
+    color: var(--danger-solid);
+    box-shadow: inset 0 0 0 1px var(--danger-solid);
+  }
+
+  .btn-destructive:hover:not(:disabled) {
+    background-color: rgba(208, 48, 74, 0.1);
+  }
+
+  .btn-destructive:active:not(:disabled) {
+    background-color: var(--danger-solid);
+    color: #ffffff;
+    transform: scale(0.97);
+  }
+
+  .btn-destructive:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--danger-solid), 0 0 0 2px var(--bg),
+      0 0 0 4px var(--danger-solid);
+  }
+
+  .btn-destructive:disabled {
+    color: rgba(208, 48, 74, 0.4);
+    box-shadow: inset 0 0 0 1px rgba(208, 48, 74, 0.3);
+    pointer-events: none;
+  }
+
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: var(--radius-control);
+    background-color: var(--btn-icon-bg);
+    color: var(--text-1);
+    cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-out);
+  }
+
+  .btn-icon:hover:not(:disabled) {
+    background-color: var(--btn-secondary-bg-hover);
+  }
+
+  .btn-icon:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus-ring-neutral);
+  }
+
+  .btn-icon:disabled {
+    color: var(--text-disabled);
+    pointer-events: none;
+  }
+
+  /* The 40px header variant. */
+  .btn-icon--sm {
+    width: 40px;
+    height: 40px;
+  }
+
+  .btn-spinner {
+    width: 16px;
+    height: 16px;
+    box-sizing: border-box;
+    border-radius: var(--radius-full);
+    border: 2px solid rgba(22, 23, 26, 0.28);
+    border-top-color: var(--grey-950);
+    animation: bridgr-spin 0.7s linear infinite;
+  }
+
+  /* Deprecated padding helpers from the previous system. */
   .btn-padding-default {
-    @apply py-[14px] px-[28px];
+    padding: 14px 24px;
   }
 
   .btn-padding-sm {
-    @apply py-[9px] px-[18px];
+    padding: 8px 16px;
+  }
+
+  /* ── 04 · Surfaces ──────────────────────────────────────────────────────
+     Flat. Depth comes from --surface-1 / --surface-2, never from shadow. */
+
+  .card {
+    border-radius: var(--radius-surface);
+    background-color: var(--surface-1);
+  }
+
+  .card-inset {
+    border-radius: var(--radius-surface);
+    background-color: var(--surface-2);
+  }
+
+  /* Deprecated alias. */
+  .card-hero {
+    border-radius: var(--radius-surface);
+    background-color: var(--surface-1);
+  }
+
+  /* The one element that sits over a scrim: shadow on light, hairline on dark. */
+  /* The hairline is a real border, not an inset shadow: --shadow-pop is `none`
+     on dark, which would invalidate a two-value shadow list. */
+  .modal {
+    border-radius: var(--radius-surface);
+    background-color: var(--surface-1);
+    padding: 20px;
+    border: 1px solid var(--modal-border);
+    box-shadow: var(--shadow-pop);
+  }
+
+  .sheet {
+    border-radius: var(--radius-surface) var(--radius-surface) 0 0;
+    background-color: var(--surface-1);
+    padding: 12px 20px 20px;
+  }
+
+  .sheet-grabber {
+    width: 40px;
+    height: 4px;
+    border-radius: 2px;
+    background-color: var(--border);
+    align-self: center;
+  }
+
+  .scrim {
+    background-color: var(--scrim);
+  }
+
+  .surface-blur {
+    background-color: color-mix(in srgb, var(--surface-1) 86%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+
+  /* 1px divider, inset 16px from the surface edge. */
+  .ruled {
+    height: 1px;
+    background-color: var(--border);
+    margin-left: 16px;
+    margin-right: 16px;
+    border: 0;
+  }
+
+  .menu {
+    border-radius: var(--radius-control);
+    background-color: var(--btn-secondary-bg);
+    box-shadow: inset 0 0 0 1px var(--border);
+    padding: 6px;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-1);
+    cursor: pointer;
+  }
+
+  .menu-item:hover {
+    background-color: var(--btn-secondary-bg-hover);
+  }
+
+  .menu-item--danger {
+    color: var(--danger);
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    border-radius: var(--radius-surface);
+    box-shadow: inset 0 0 0 1px var(--border);
+    padding: 20px;
+  }
+
+  /* The whole row is the hit target: 24px icon · body-lg title + caption ·
+     trailing chevron. */
+  .list-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    width: 100%;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .list-row:active {
+    background-color: var(--surface-2);
+  }
+
+  .list-row__body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list-row__title {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 500;
+    color: var(--text-1);
+  }
+
+  .list-row__meta {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-3);
+  }
+
+  .list-row__chevron {
+    flex: none;
+    font-size: 16px;
+    color: var(--text-3);
+  }
+
+  /* ── 04 · Fields — a visible label is mandatory ─────────────────────────
+     The one exception is the session answer field, where the question above it
+     is the label. Placeholders never stand in for a label. */
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .field-label {
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    color: var(--text-2);
+  }
+
+  .field-help {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--text-3);
+  }
+
+  .field-help--error {
+    color: var(--danger-on-subtle);
+  }
+
+  .field-input {
+    height: 56px;
+    width: 100%;
+    padding: 0 16px;
+    border-radius: var(--radius-control);
+    background-color: var(--field-bg);
+    color: var(--text-1);
+    font-size: 16px;
+    box-shadow: inset 0 0 0 1px var(--border);
+    transition: box-shadow var(--dur-1) var(--ease-out);
+  }
+
+  .field-input::placeholder {
+    color: var(--text-3);
+  }
+
+  .field-input:focus,
+  .field-input:focus-visible {
+    outline: none;
+    box-shadow: inset 0 0 0 2px var(--accent-fill);
+  }
+
+  .field-input[aria-invalid='true'],
+  .field-input--error {
+    box-shadow: inset 0 0 0 2px var(--danger);
+  }
+
+  /* Extends the error variant for the session answer field, which reports a
+     correct answer in place. Not in the design doc; same construction. */
+  .field-input--success,
+  .field-input--success:focus {
+    box-shadow: inset 0 0 0 2px var(--success);
+  }
+
+  .field-input:disabled {
+    background-color: var(--field-disabled-bg);
+    box-shadow: inset 0 0 0 1px var(--field-disabled-border);
+    color: var(--text-disabled);
+  }
+
+  .field-textarea {
+    height: auto;
+    min-height: 96px;
+    padding: 16px;
+    line-height: 24px;
+    resize: vertical;
+  }
+
+  /* ── 04 · Selection controls ────────────────────────────────────────────
+     Everything is flat; iOS toggle and slider thumbs keep their native shadow. */
+
+  .checkbox {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    border-radius: var(--radius-badge);
+    background-color: var(--surface-1);
+    box-shadow: inset 0 0 0 1.5px var(--text-disabled);
+  }
+
+  .checkbox--checked,
+  .checkbox--indeterminate {
+    background-color: var(--accent-fill);
+    box-shadow: none;
+    color: var(--accent-on-fill);
+  }
+
+  .radio {
+    width: 22px;
+    height: 22px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: var(--surface-1);
+    box-shadow: inset 0 0 0 1.5px var(--text-disabled);
+  }
+
+  .radio--checked {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--accent-graph);
+  }
+
+  .toggle {
+    width: 51px;
+    height: 31px;
+    box-sizing: border-box;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    background-color: var(--toggle-off);
+    cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-out);
+  }
+
+  .toggle--on {
+    background-color: var(--accent-fill);
+    justify-content: flex-end;
+  }
+
+  .toggle-thumb {
+    width: 27px;
+    height: 27px;
+    border-radius: var(--radius-full);
+    background-color: #ffffff;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 1px 1px rgba(0, 0, 0, 0.16);
+  }
+
+  .slider-track {
+    height: 36px;
+    box-sizing: border-box;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    background-color: var(--track);
+  }
+
+  .slider-fill {
+    height: 28px;
+    border-radius: var(--radius-full);
+    background-color: var(--accent-fill);
+  }
+
+  .stepper-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    flex: none;
+    border-radius: var(--radius-control);
+    background-color: var(--btn-icon-bg);
+    color: var(--text-1);
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  /* ── 04 · Chips, segments, tabs, badges ─────────────────────────────────── */
+
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: var(--radius-full);
+    background-color: var(--chip-bg);
+    box-shadow: inset 0 0 0 1px var(--chip-border);
+    font-size: 14px;
+    color: var(--text-2);
+    cursor: pointer;
+    transition: background-color var(--dur-1) var(--ease-out),
+      color var(--dur-1) var(--ease-out);
+  }
+
+  .chip--selected {
+    background-color: var(--accent-fill);
+    box-shadow: none;
+    color: var(--accent-on-fill);
+    font-weight: 700;
+  }
+
+  .chip:disabled,
+  .chip--disabled {
+    background-color: var(--chip-disabled-bg);
+    color: var(--text-disabled);
+    pointer-events: none;
+  }
+
+  .segmented {
+    display: flex;
+    gap: 4px;
+    height: 44px;
+    padding: 4px;
+    border-radius: var(--radius-control);
+    background-color: var(--segment-track);
+  }
+
+  .segment {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 14px;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+
+  .segment--active {
+    background-color: var(--segment-active-bg);
+    color: var(--segment-active-text);
+    font-weight: 700;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 10px 0;
+    font-size: 16px;
+    color: var(--text-2);
+    cursor: pointer;
+  }
+
+  .tab--active {
+    color: var(--text-1);
+    font-weight: 700;
+    box-shadow: inset 0 -2px 0 var(--tab-underline);
+  }
+
+  /* Outline, DM Sans — an accent-text label on a hairline. */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    height: 24px;
+    padding: 0 10px;
+    border-radius: var(--radius-full);
+    background-color: var(--badge-bg);
+    box-shadow: inset 0 0 0 1px var(--badge-border);
+    color: var(--accent-text);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .badge--neutral {
+    background-color: var(--badge-neutral-bg);
+    box-shadow: inset 0 0 0 1px var(--badge-neutral-border);
+    color: var(--text-2);
+  }
+
+  /* 20px minimum, 6px side padding at any count. */
+  .notification {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 20px;
+    min-width: 20px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    border-radius: var(--radius-full);
+    background-color: var(--danger);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: var(--fab-bg);
+    color: var(--fab-glyph);
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* ── 04 · Progress ──────────────────────────────────────────────────────── */
+
+  .progress-bar {
+    height: 8px;
+    border-radius: 4px;
+    background-color: var(--track);
+    overflow: hidden;
+  }
+
+  .progress-bar__fill {
+    height: 100%;
+    background-color: var(--accent-graph);
+    transition: width var(--dur-2) var(--ease-out);
+  }
+
+  .progress-ring__track {
+    stroke: var(--track);
+  }
+
+  .progress-ring__fill {
+    stroke: var(--accent-graph);
+  }
+
+  /* ── 04 · Feedback ──────────────────────────────────────────────────────── */
+
+  .alert {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-radius: var(--radius-control);
+    background-color: var(--danger-subtle);
+    color: var(--text-1);
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .alert__body {
+    color: var(--danger-on-subtle);
+  }
+
+  .alert--warning {
+    background-color: var(--warning-subtle);
+  }
+
+  .alert--warning .alert__body {
+    color: var(--warning-on-subtle);
+  }
+
+  .alert--success {
+    background-color: var(--success-subtle);
+  }
+
+  .alert--success .alert__body {
+    color: var(--success-on-subtle);
+  }
+
+  .alert__title {
+    font-weight: 700;
+  }
+
+  .toast {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: var(--radius-control);
+    background-color: var(--toast-bg);
+    color: var(--toast-text);
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .tooltip {
+    display: inline-flex;
+    padding: 7px 11px;
+    border-radius: 10px;
+    background-color: var(--toast-bg);
+    color: var(--toast-text);
+    font-size: 14px;
+  }
+
+  .skeleton {
+    height: 12px;
+    border-radius: 6px;
+    background-color: var(--skeleton);
+  }
+
+  /* ── 04 · Chrome ────────────────────────────────────────────────────────
+     Floating pill nav, 64px tall, 10px clear of the FAB and 16px of the screen
+     edge. Only the active tab carries a label; the other two stay 24px icons.
+     The FAB is a separate circle and never sits inside the bar. */
+
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+  }
+
+  .navbar-float {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex: 1;
+    min-width: 0;
+    height: 64px;
+    padding: 0 8px;
+    border-radius: var(--radius-full);
+    background-color: var(--navbar-bg);
+  }
+
+  .navbar-tab {
+    flex: 1;
+    min-width: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navbar-idle);
+  }
+
+  .navbar-tab--active {
+    flex: none;
+    gap: 8px;
+    height: 48px;
+    padding: 0 18px 0 14px;
+    border-radius: var(--radius-full);
+    background-color: var(--navbar-active-bg);
+    color: var(--navbar-active-text);
+    font-size: 15px;
+    line-height: 20px;
+    font-weight: 700;
+  }
+
+  .navbar-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: var(--fab-bg);
+    color: var(--fab-glyph);
+    cursor: pointer;
+  }
+
+  /* ── 04 · Language paging ───────────────────────────────────────────────
+     The primary spatial metaphor: one hero per language, paged horizontally
+     1:1 with the finger, then snapped with --ease-spring. */
+
+  .lang-pager {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
+  .lang-pager::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* One page per language. The hero, name and sheet are a single plane that
+     travels 1:1 with the finger and snaps on release. */
+  .lang-page {
+    flex: 0 0 100%;
+    width: 100%;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  /* The hero is an image stage: dark in both modes, all text light-on-image. */
+  .hero-lang {
+    position: relative;
+    flex: 0 0 auto;
+    height: 352px;
+    overflow: hidden;
+    color: var(--text-on-image-1);
+  }
+
+  .hero-lang__art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-lang__scrim {
+    position: absolute;
+    inset: 0;
+    background: var(--hero-scrim);
+  }
+
+  .hero-lang__header {
+    position: absolute;
+    top: 52px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .hero-lang__block {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .hero-lang__eyebrow {
+    font-family: 'IBM Plex Mono', ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 16px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-on-image);
+  }
+
+  .hero-lang__name {
+    font-family: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+    font-optical-sizing: auto;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-size: 48px;
+    line-height: 56px;
+  }
+
+  .hero-lang__meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    line-height: 24px;
+    color: var(--text-on-image-2);
+  }
+
+  .hero-lang__meta-strong {
+    color: var(--text-on-image-1);
+  }
+
+  /* 48px circular control on the image — notifications, avatar. */
+  .hero-lang__action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: rgba(16, 17, 19, 0.5);
+    box-shadow: inset 0 0 0 1px rgba(244, 244, 241, 0.18);
+    color: var(--text-on-image-1);
+    cursor: pointer;
+  }
+
+  .hero-lang__avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: var(--accent-fill);
+    color: var(--accent-on-fill);
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* One bar per session in the weekly goal. */
+  .session-pips {
+    display: flex;
+    gap: 4px;
+    padding-top: 8px;
+  }
+
+  .session-pips__pip {
+    flex: 1;
+    height: 4px;
+    border-radius: var(--radius-full);
+    background-color: var(--pip-empty);
+  }
+
+  .session-pips__pip--filled {
+    background-color: var(--accent-fill);
+  }
+
+  /* Language rail — one mark per language, then an outline dot for "add". */
+  .pager-rail {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 16px 0 8px;
+  }
+
+  .pager-rail__dot {
+    width: 4px;
+    height: 4px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: var(--rail-idle);
+    transition: width var(--dur-3) var(--ease-spring),
+      background-color var(--dur-2) var(--ease-out);
+  }
+
+  .pager-rail__dot--active {
+    width: 24px;
+    background-color: var(--accent-fill);
+  }
+
+  .pager-rail__dot--add {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 1px var(--rail-idle);
+  }
+
+  /* The sheet below the hero. */
+  .lang-sheet {
+    flex: 1;
+    min-height: 0;
+    padding: 16px 24px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    overflow: hidden;
+  }
+
+  /* The one action on the screen: a 64px lime pill with a trailing glyph. */
+  .cta-session {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    height: 64px;
+    padding: 0 8px 0 24px;
+    border-radius: var(--radius-full);
+    background-color: var(--accent-fill);
+    color: var(--accent-on-fill);
+    cursor: pointer;
+    text-align: left;
+    transition: background-color var(--dur-1) var(--ease-out),
+      transform var(--dur-1) var(--ease-out);
+  }
+
+  .cta-session:hover:not(:disabled) {
+    background-color: var(--accent-fill-hover);
+  }
+
+  .cta-session:active:not(:disabled) {
+    transform: scale(0.99);
+  }
+
+  .cta-session:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--focus-ring);
+  }
+
+  .cta-session:disabled {
+    background-color: var(--disabled-fill);
+    color: var(--disabled-text);
+    pointer-events: none;
+  }
+
+  .cta-session__title {
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .cta-session__sub {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--accent-on-fill-2);
+  }
+
+  .cta-session__go {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    flex: none;
+    border-radius: var(--radius-full);
+    background-color: var(--cta-trailing-bg);
+    color: var(--accent-on-image);
+  }
+
+  /* ── 03 · Motion ────────────────────────────────────────────────────────
+     Pair with an inline animation-delay for a stagger. Disabled automatically
+     under prefers-reduced-motion. */
+
+  .rise {
+    opacity: 0;
+    animation: rise var(--dur-2) var(--ease-out) forwards;
+  }
+
+@media (prefers-reduced-motion: reduce) {
+  /* No travel, no spring: the hero and sheet cross-fade, the indicator jumps. */
+  .lang-pager {
+    scroll-behavior: auto;
+  }
+
+  .rise {
+    opacity: 1;
+    animation: none;
   }
 }
+
+/* Utilities come last so any Tailwind class beats a system class. */
+@tailwind utilities;

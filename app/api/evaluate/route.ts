@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 const EVALUATIONS_CACHE = "evaluations_cache" as const;
 
-const MODEL = "claude-haiku-4-5";
+const MODEL = "claude-haiku-4-5-20251001";
 const MAX_TOKENS = 300;
 
 const SYSTEM_PROMPT =

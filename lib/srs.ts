@@ -63,13 +63,12 @@ export function calculateNextReview(
 export async function getDueCards(
   userId: string,
   supabaseClient: SupabaseClient,
-  limit = 20
+  limit = 20,
+  languageCode?: string
 ): Promise<DueFlashcard[]> {
   const today = new Date().toISOString().split("T")[0];
 
-  console.log("[getDueCards] call", { userId, limit, today });
-
-  const { data, error } = await supabaseClient
+  let query = supabaseClient
     .from("flashcards")
     .select("*, word:words!inner(*)")
     .eq("user_id", userId)
@@ -77,11 +76,17 @@ export async function getDueCards(
     .order("next_review_date", { ascending: true })
     .limit(limit);
 
+  // NOTE: legacy rows with a null language_code drop out of per-language
+  // review — see docs/ux-audit-2026-07-11.md backend notes (backfill needed).
+  if (languageCode) {
+    query = query.eq("language_code", languageCode);
+  }
+
+  const { data, error } = await query;
+
   if (error) {
     throw error;
   }
-
-  console.log("[getDueCards] raw response", data);
 
   const seen = new Set<string>();
   const unique = ((data ?? []) as Array<Flashcard & { word?: Word }>).filter((row) => {
@@ -90,7 +95,5 @@ export async function getDueCards(
     return true;
   });
 
-  const result = unique.map((row) => ({ ...(row as Flashcard), words: row.word as Word })) as DueFlashcard[];
-  console.log("[getDueCards] returned", result);
-  return result;
+  return unique.map((row) => ({ ...(row as Flashcard), words: row.word as Word })) as DueFlashcard[];
 }

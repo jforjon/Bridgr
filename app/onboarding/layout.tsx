@@ -1,16 +1,17 @@
 "use client";
 
-import { ChevronLeft } from "lucide-react";
+import { IconArrowLeft } from "@tabler/icons-react";
 import { usePathname, useRouter } from "next/navigation";
+import { OnboardingBackProvider, useOnboardingBackHandler } from "./OnboardingBackContext";
 import { ONBOARDING_TOTAL_STEPS } from "./shared";
 
-export default function OnboardingLayout({
-  children
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+const backButtonClass =
+  "flex h-[36px] w-[36px] shrink-0 items-center justify-center rounded-full bg-[var(--surface-1)] text-[var(--text-2)] transition hover:opacity-90";
+
+function OnboardingLayoutHeader() {
   const pathname = usePathname();
   const router = useRouter();
+  const customBackHandler = useOnboardingBackHandler();
 
   const stepMatch = pathname.match(/^\/onboarding\/(\d+)/);
   const currentStep = stepMatch ? Number(stepMatch[1]) : 1;
@@ -18,37 +19,59 @@ export default function OnboardingLayout({
     ? 1
     : Math.max(1, Math.min(ONBOARDING_TOTAL_STEPS, currentStep));
 
+  const showBackButton = safeStep > 1;
+
+  const handleBack = () => {
+    if (customBackHandler) {
+      customBackHandler();
+      return;
+    }
+    router.back();
+  };
+
   return (
-    <div className="mx-auto min-h-screen w-full max-w-[480px] bg-[var(--bg)]">
-      <div className="px-6 pt-7">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {safeStep > 1 ? (
-              <button
-                type="button"
-                onClick={() => router.back()}
-                aria-label="Go back"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[var(--card)] text-[var(--text-primary)]"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-            ) : null}
-            <span className="font-sans text-2xl font-black tracking-tight text-[var(--text-primary)]">
-              Bridg<span className="text-[var(--accent)]">r</span>
-            </span>
-          </div>
-          <span className="text-[10px] font-bold uppercase tracking-label text-[var(--text-secondary)]">
-            Step {safeStep} of {ONBOARDING_TOTAL_STEPS}
+    <div className="px-page pt-7">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          {showBackButton ? (
+            <button
+              type="button"
+              onClick={handleBack}
+              aria-label="Go back"
+              className={backButtonClass}
+            >
+              <IconArrowLeft size={18} stroke={1.75} aria-hidden />
+            </button>
+          ) : null}
+          <span className="font-sans text-2xl font-bold tracking-tight text-[var(--text-1)]">
+            Bridg<span className="text-[var(--accent-text)]">r</span>
           </span>
         </div>
-        <div className="mt-4 h-[3px] w-full overflow-hidden rounded-pill bg-[var(--card-2)]">
-          <div
-            className="h-full rounded-pill bg-[#BFFF00] transition-all duration-300"
-            style={{ width: `${(safeStep / ONBOARDING_TOTAL_STEPS) * 100}%` }}
-          />
-        </div>
+        <span className="text-[10px] font-bold uppercase tracking-label text-[var(--text-2)]">
+          Step {safeStep} of {ONBOARDING_TOTAL_STEPS}
+        </span>
       </div>
-      <div className="px-6 pb-36 pt-8">{children}</div>
+      <div className="progress-bar mt-4 h-[3px] w-full">
+        <div
+          className="progress-bar__fill duration-300"
+          style={{ width: `${(safeStep / ONBOARDING_TOTAL_STEPS) * 100}%` }}
+        />
+      </div>
     </div>
+  );
+}
+
+export default function OnboardingLayout({
+  children
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <OnboardingBackProvider>
+      <div className="mx-auto min-h-screen w-full max-w-[480px] bg-[var(--bg)]">
+        <OnboardingLayoutHeader />
+        <div className="px-page pb-36 pt-8">{children}</div>
+      </div>
+    </OnboardingBackProvider>
   );
 }

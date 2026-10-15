@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const inputBase =
-  "w-full rounded-pill border-none bg-[var(--card-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
+  "field-input";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -69,22 +69,22 @@ export default function SignUpPage() {
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
-      <header className="px-6 pt-8">
-        <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></h1>
+      <header className="px-page pt-8">
+        <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-1)]">Bridg<span className="text-[var(--accent-text)]">r</span></span></h1>
       </header>
 
-      <div className="flex justify-center px-4 pt-6">
-        <div className="w-full max-w-[375px] rounded-xl bg-[var(--card)]">
-        <section className="px-6 pb-8 pt-4 text-center">
-          <h2 className="text-balance font-sans text-2xl font-extrabold text-[var(--text-primary)]">
+      <div className="px-page flex justify-center pt-6">
+        <div className="w-full max-w-[375px] rounded-xl bg-[var(--surface-1)]">
+        <section className="px-page pb-8 pt-4 text-center">
+          <h2 className="text-balance font-sans text-2xl font-semibold text-[var(--text-1)]">
             Create your account
           </h2>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">Start learning smarter today</p>
+          <p className="mt-2 text-sm text-[var(--text-2)]">Start learning smarter today</p>
         </section>
 
-        <form noValidate onSubmit={handleSubmit} className="mt-8 px-6">
+        <form noValidate onSubmit={handleSubmit} className="px-page mt-8">
           <div>
-            <label htmlFor="email" className="text-sm font-bold text-[var(--text-primary)]">
+            <label htmlFor="email" className="field-label">
               Email
             </label>
             <input
@@ -96,15 +96,16 @@ export default function SignUpPage() {
                 setEmail(e.target.value);
                 setEmailError("");
               }}
-              className={`${inputBase} mt-1.5 ${emailError ? "ring-1 ring-danger" : ""}`}
+              aria-invalid={Boolean(emailError)}
+              className={`${inputBase} mt-1.5`}
             />
             {emailError ? (
-              <p className="mt-1 text-xs text-red-400">{emailError}</p>
+              <p className="field-help field-help--error mt-2">{emailError}</p>
             ) : null}
           </div>
 
           <div className="mt-4">
-            <label htmlFor="password" className="text-sm font-bold text-[var(--text-primary)]">
+            <label htmlFor="password" className="field-label">
               Password
             </label>
             <div className="relative mt-1.5">
@@ -117,24 +118,25 @@ export default function SignUpPage() {
                   setPassword(e.target.value);
                   setPasswordError("");
                 }}
-                className={`${inputBase} pl-4 pr-11 ${passwordError ? "ring-1 ring-danger" : ""}`}
+                aria-invalid={Boolean(passwordError)}
+              className={`${inputBase} pl-4 pr-11`}
               />
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-secondary)] hover:text-[var(--accent)] focus-visible:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-2)] hover:text-[var(--accent-text)] focus-visible:outline-none"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             {passwordError ? (
-              <p className="mt-1 text-xs text-red-400">{passwordError}</p>
+              <p className="field-help field-help--error mt-2">{passwordError}</p>
             ) : null}
           </div>
 
           <div className="mt-4">
-            <label htmlFor="confirmPassword" className="text-sm font-bold text-[var(--text-primary)]">
+            <label htmlFor="confirmPassword" className="field-label">
               Confirm password
             </label>
             <div className="relative mt-1.5">
@@ -147,21 +149,20 @@ export default function SignUpPage() {
                   setConfirmPassword(e.target.value);
                   setConfirmPasswordError("");
                 }}
-                className={`${inputBase} pl-4 pr-11 ${
-                  confirmPasswordError ? "ring-1 ring-danger" : ""
-                }`}
+                aria-invalid={Boolean(confirmPasswordError)}
+              className={`${inputBase} pl-4 pr-11`}
               />
               <button
                 type="button"
                 aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-secondary)] hover:text-[var(--accent)] focus-visible:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-2)] hover:text-[var(--accent-text)] focus-visible:outline-none"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
               >
                 {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
             {confirmPasswordError ? (
-              <p className="mt-1 text-xs text-red-400">{confirmPasswordError}</p>
+              <p className="field-help field-help--error mt-2">{confirmPasswordError}</p>
             ) : null}
           </div>
 
@@ -169,18 +170,18 @@ export default function SignUpPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+              className="btn-primary w-full"
             >
               {loading ? "Creating account..." : "Create account"}
             </button>
           </div>
 
-          {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
         </form>
 
-        <section className="mt-6 px-6 pb-12 text-center">
-          <p className="text-sm text-[var(--text-secondary)]">Already have an account?</p>
-          <Link href="/login" className="mt-1 block text-sm font-extrabold text-[var(--accent)] hover:underline">
+        <section className="px-page mt-6 pb-12 text-center">
+          <p className="text-sm text-[var(--text-2)]">Already have an account?</p>
+          <Link href="/login" className="mt-1 block text-sm font-semibold text-[var(--accent-text)] hover:underline">
             Log in
           </Link>
         </section>

@@ -12,7 +12,7 @@ import { WEEKLY_GOAL_OPTIONS, type WeeklyGoalOption } from "@/types";
 import { ONBOARDING_LANGUAGE_STORAGE_KEY } from "../shared";
 
 const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4";
+  "px-page fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] py-4";
 
 function OnboardingStepFiveContent() {
   const router = useRouter();
@@ -66,8 +66,8 @@ function OnboardingStepFiveContent() {
 
   return (
     <>
-      <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">How often do you want to practice?</h1>
-      <p className="mt-3 text-sm text-[var(--text-secondary)]">
+      <h1 className="font-sans text-3xl font-semibold text-[var(--text-1)]">How often do you want to practice?</h1>
+      <p className="mt-3 text-sm text-[var(--text-2)]">
         Your streak counts by week, not by day — hit your goal each week to keep it going
       </p>
 
@@ -80,22 +80,22 @@ function OnboardingStepFiveContent() {
               type="button"
               onClick={() => setWeeklyGoal(option.value)}
               className={`flex w-full items-center gap-4 rounded-xl border p-4 text-left ${
-                selected ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
+                selected ? "border-[var(--accent-text)] bg-[var(--surface-2)]" : "border-[var(--border)] bg-[var(--surface-1)]"
               }`}
             >
               <div className="min-w-0 flex-1">
-                <p className="font-bold text-[var(--text-primary)]">{option.label}</p>
-                <p className="text-sm text-[var(--text-secondary)]">{option.description}</p>
+                <p className="font-bold text-[var(--text-1)]">{option.label}</p>
+                <p className="text-sm text-[var(--text-2)]">{option.description}</p>
               </div>
               {option.value === 3 ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--accent)]/20 bg-[var(--card-2)] px-2 py-1 text-xs font-extrabold text-[var(--accent)]">
+                <span className="inline-flex items-center gap-1 rounded-full border border-[var(--accent-text)]/20 bg-[var(--surface-2)] px-2 py-1 text-xs font-semibold text-[var(--accent-text)]">
                   <IconStar size={14} className="text-amber" stroke={2} aria-hidden />
                   Recommended
                 </span>
               ) : null}
               <span
                 className={`h-5 w-5 shrink-0 rounded-full border-2 ${
-                  selected ? "border-[var(--accent)] bg-[#BFFF00]" : "border-[var(--border)] bg-[var(--card-2)]"
+                  selected ? "border-[var(--accent-text)] bg-accent-fill" : "border-[var(--border)] bg-[var(--surface-2)]"
                 }`}
               />
             </button>
@@ -105,12 +105,12 @@ function OnboardingStepFiveContent() {
 
       <div className={bottomBar}>
         <div className="mx-auto w-full max-w-[480px]">
-          {error ? <p className="mb-2 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
           <Button
             type="button"
             onClick={() => void handleContinue()}
             disabled={saving}
-            className="h-auto min-h-0 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-50"
+            fullWidth
           >
             {saving ? "Saving..." : "Continue"}
           </Button>
@@ -122,7 +122,7 @@ function OnboardingStepFiveContent() {
 
 export default function OnboardingStepFivePage() {
   return (
-    <Suspense fallback={<p className="text-sm text-[var(--text-secondary)]">Loading…</p>}>
+    <Suspense fallback={<p className="text-sm text-[var(--text-2)]">Loading…</p>}>
       <OnboardingStepFiveContent />
     </Suspense>
   );

@@ -64,7 +64,7 @@ const PROFILES = [
 
 type ProfileKey = (typeof PROFILES)[number]["key"];
 
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-sonnet-4-5-20250929";
 const MAX_TOKENS = 8000;
 
 const SYSTEM_PROMPT =

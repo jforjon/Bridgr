@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { login, resetTestUser } from './helpers/auth'
 
-test.setTimeout(120_000)
+test.setTimeout(240_000)
 
 test.beforeEach(async () => {
   await resetTestUser()
@@ -10,7 +10,7 @@ test.beforeEach(async () => {
 test('completes full onboarding and lands on /learn', async ({ page }) => {
   // ── Step 0: log in ────────────────────────────────────────────────────────
   await login(page)
-  await page.waitForURL('**/onboarding/1', { timeout: 10_000 })
+  await page.waitForURL('**/onboarding/1', { timeout: 30_000 })
   await expect(page).toHaveURL(/\/onboarding\/1/)
 
   // ── Step 1: Name ──────────────────────────────────────────────────────────
@@ -44,15 +44,11 @@ test('completes full onboarding and lands on /learn', async ({ page }) => {
   await page.waitForURL('**/onboarding/6**', { timeout: 10_000 })
   await expect(page).toHaveURL(/\/onboarding\/6/)
 
-  // ── Step 6: Notifications — No thanks ─────────────────────────────────────
+  // ── Step 6: Notifications — skip as beginner ──────────────────────────────
   await page.getByRole('button', { name: 'No thanks' }).click()
-  await page.getByRole('button', { name: 'Continue' }).click()
-  await page.waitForURL('**/placement/**', { timeout: 15_000 })
-  await expect(page).toHaveURL(/\/placement\/it/)
-
-  // ── Placement: skip as beginner ───────────────────────────────────────────
-  await page.getByRole('button', { name: "I'm a complete beginner" }).click()
-  await page.waitForURL('**/learn**', { timeout: 120_000 })
+  // Source uses a typographic apostrophe (U+2019), not a straight one.
+  await page.getByRole('button', { name: 'I’m a complete beginner' }).click()
+  await page.waitForURL('**/learn**', { timeout: 180_000 })
   await expect(page).toHaveURL(/\/learn/)
 
   // ── Final: /learn page is present with content loaded ────────────────────

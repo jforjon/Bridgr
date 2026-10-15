@@ -23,10 +23,10 @@ type SelectedKnownLanguage = {
 };
 
 const searchInputClass =
-  "h-12 w-full rounded-pill border-none bg-[var(--card-2)] px-4 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
+  "field-input";
 
 const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4";
+  "px-page fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] py-4";
 
 export default function OnboardingStepThreePage() {
   const router = useRouter();
@@ -157,10 +157,15 @@ export default function OnboardingStepThreePage() {
       throw userError ?? new Error("User not authenticated.");
     }
 
-    const { error: deleteKnownError } = await supabase
-      .from("known_languages")
-      .delete()
-      .eq("user_id", user.id);
+    // Replace only the "other languages" the user manages here. The native
+    // language (saved in step 2) is a known_languages row too, but it is not
+    // shown in this picker — so it must survive this delete, otherwise saving
+    // with nothing selected would wipe the row the /learn gate depends on.
+    let deleteKnown = supabase.from("known_languages").delete().eq("user_id", user.id);
+    if (nativeLanguageCode) {
+      deleteKnown = deleteKnown.neq("language_code", nativeLanguageCode);
+    }
+    const { error: deleteKnownError } = await deleteKnown;
 
     if (deleteKnownError) {
       throw deleteKnownError;
@@ -208,7 +213,7 @@ export default function OnboardingStepThreePage() {
       <div
         key={language.code}
         className={`w-full rounded-xl border transition-all ${
-          selected ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
+          selected ? "border-[var(--accent-text)] bg-[var(--surface-2)]" : "border-[var(--border)] bg-[var(--surface-1)]"
         }`}
       >
         <button
@@ -217,18 +222,18 @@ export default function OnboardingStepThreePage() {
           className="flex w-full items-center px-5 py-4"
         >
           <span className="text-2xl">{getLanguageVisual(language)}</span>
-          <span className="ml-4 text-base font-bold text-[var(--text-primary)]">{language.name}</span>
+          <span className="ml-4 text-base font-bold text-[var(--text-1)]">{language.name}</span>
           <div className="ml-auto flex shrink-0 items-center justify-center">
             <div
               className={
                 selected
-                  ? "flex h-5 w-5 items-center justify-center rounded-sm border-2 border-[var(--accent)] bg-[#BFFF00]"
-                  : "h-5 w-5 rounded-sm border-2 border-[var(--border)] bg-[var(--card-2)]"
+                  ? "flex h-5 w-5 items-center justify-center rounded-sm border-2 border-[var(--accent-text)] bg-accent-fill"
+                  : "h-5 w-5 rounded-sm border-2 border-[var(--border)] bg-[var(--surface-2)]"
               }
               aria-hidden
             >
               {selected ? (
-                <IconCheck size={12} className="text-[#2A3800]" stroke={3} aria-hidden />
+                <IconCheck size={12} className="text-accent-ink" stroke={3} aria-hidden />
               ) : null}
             </div>
           </div>
@@ -244,15 +249,15 @@ export default function OnboardingStepThreePage() {
                   onClick={() => setKnownProficiency(language.code, level)}
                   className={`shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-sm font-bold ${
                     proficiency === level
-                      ? "border-[var(--accent)] bg-[#BFFF00] text-[#2A3800]"
-                      : "border-[var(--border)] bg-[var(--card-2)] text-[var(--text-secondary)]"
+                      ? "border-[var(--accent-text)] bg-accent-fill text-accent-ink"
+                      : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-2)]"
                   }`}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <p className="ml-1 mt-1 text-xs italic text-[var(--text-secondary)]">{LEVEL_CAPTION[proficiency]}</p>
+            <p className="ml-1 mt-1 text-xs italic text-[var(--text-2)]">{LEVEL_CAPTION[proficiency]}</p>
           </div>
         ) : null}
       </div>
@@ -262,13 +267,13 @@ export default function OnboardingStepThreePage() {
   return (
     <>
       <div className="flex items-center justify-between gap-3">
-        <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">
+        <h1 className="font-sans text-3xl font-semibold text-[var(--text-1)]">
           What other languages do you speak?
         </h1>
         <button
           type="button"
           onClick={() => router.push("/onboarding/4")}
-          className="shrink-0 text-sm font-bold text-[var(--accent)]"
+          className="shrink-0 text-sm font-bold text-[var(--accent-text)]"
         >
           Skip
         </button>
@@ -289,19 +294,19 @@ export default function OnboardingStepThreePage() {
             className={searchInputClass}
           />
           {searchMenuOpen && searchDropdownCandidates.length > 0 ? (
-            <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--card-2)] shadow-lg">
+            <ul className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-2)] shadow-lg">
               <div className="max-h-48 overflow-y-auto">
                 {searchDropdownCandidates.map((language) => (
                   <li key={language.code}>
                     <button
                       type="button"
-                      className="flex w-full items-center gap-3 bg-[var(--card-2)] px-4 py-3 text-left text-sm text-[var(--text-primary)] hover:bg-[var(--card)]"
+                      className="flex w-full items-center gap-3 bg-[var(--surface-2)] px-4 py-3 text-left text-sm text-[var(--text-1)] hover:bg-[var(--surface-1)]"
                       onMouseDown={(event) => event.preventDefault()}
                       onClick={() => addLanguageFromSearch(language)}
                     >
                       <span className="text-xl">{getLanguageVisual(language)}</span>
                       <span className="font-bold">{language.name}</span>
-                      <span className="ml-auto text-xs text-[var(--text-secondary)]">{language.code}</span>
+                      <span className="ml-auto text-xs text-[var(--text-2)]">{language.code}</span>
                     </button>
                   </li>
                 ))}
@@ -318,14 +323,14 @@ export default function OnboardingStepThreePage() {
 
       <div className={bottomBar}>
         <div className="mx-auto w-full max-w-[480px]">
-          {error ? <p className="mb-2 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
           <div className="grid grid-cols-2 gap-3">
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={() => router.push("/onboarding/4")}
               disabled={saving}
-              className="h-auto min-h-0 rounded-full border border-[var(--border)] bg-transparent py-4 text-base font-extrabold text-[var(--text-secondary)] hover:bg-[var(--card)]"
+              className="flex-1"
             >
               Skip
             </Button>
@@ -333,7 +338,7 @@ export default function OnboardingStepThreePage() {
               type="button"
               onClick={() => void handleContinue()}
               disabled={saving}
-              className="h-auto min-h-0 rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-50"
+              className="flex-1"
             >
               {saving ? "Saving..." : "Continue"}
             </Button>

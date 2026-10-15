@@ -7,7 +7,7 @@ import { CEFR_LEVELS, SUPPORTED_LANGUAGES, type CEFRLevel } from "@/types";
 
 export const runtime = "nodejs";
 
-const COURSE_MODEL = "claude-sonnet-4-5";
+const COURSE_MODEL = "claude-sonnet-4-5-20250929";
 const COURSE_MAX_TOKENS = 2000;
 
 const SYSTEM_PROMPT =
@@ -312,7 +312,7 @@ export async function POST(request: Request) {
 
   const course_id = courseRow.id as string;
 
-  const { error: delUnitsErr } = await supabase.from("units").delete().eq("course_id", course_id);
+  const { error: delUnitsErr } = await adminClient.from("units").delete().eq("course_id", course_id);
   if (delUnitsErr) {
     console.error("[course/generate] units delete:", delUnitsErr);
     return NextResponse.json({ error: delUnitsErr.message }, { status: 500 });
@@ -331,11 +331,10 @@ export async function POST(request: Request) {
     unlocked_at: i === 0 ? now : null
   }));
 
-  const { data: insertedUnits, error: unitsInsErr } = await supabase
+  const { data: insertedUnits, error: unitsInsErr } = await adminClient
     .from("units")
     .insert(unitInsertRows)
-    .select("id, order_index")
-    .order("order_index", { ascending: true });
+    .select("id, order_index");
 
   if (unitsInsErr || !insertedUnits?.length) {
     console.error("[course/generate] units insert:", unitsInsErr);
@@ -343,7 +342,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: unitsInsErr?.message ?? "Unit insert failed." }, { status: 500 });
   }
 
-  const first_unit_id = insertedUnits[0].id as string;
+  const firstInserted = insertedUnits
+    .slice()
+    .sort((a, b) => (a.order_index as number) - (b.order_index as number))[0];
+
+  if (!firstInserted?.id) {
+    console.error("[course/generate] no id returned for first unit");
+    await supabase.from("courses").delete().eq("id", course_id);
+    return NextResponse.json({ error: "Unit insert returned no id." }, { status: 500 });
+  }
+
+  const first_unit_id = firstInserted.id as string;
   const first_topic_key = normalized[0].topic_key;
 
   const knownForLessons = (knownRows ?? []).map((k) => ({
@@ -354,7 +363,7 @@ export async function POST(request: Request) {
 
   try {
     await generateLessonsForUnit(
-      supabase,
+      adminClient,
       first_unit_id,
       first_topic_key,
       language_code,
@@ -373,7 +382,7 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     course_id,
-    units_count: insertedUnits.length,
+    units_count: unitInsertRows.length,
     first_unit_id
   });
 }

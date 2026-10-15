@@ -1,8 +1,9 @@
 "use client";
 
-import { IconX } from "@tabler/icons-react";
+import { IconAlertTriangle, IconBulb, IconCheck, IconX } from "@tabler/icons-react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import BottomNav from "@/components/BottomNav";
 import { createClient } from "@/lib/supabase/client";
 import { evaluateAnswerFromApi, evaluateClientTier1 } from "@/lib/evaluateAnswer";
@@ -27,8 +28,10 @@ type PostEvalUnderstand =
   | { status: "ok"; paragraph: string }
   | { status: "error"; message: string };
 
-export default function PracticeReviewPage() {
+function PracticeReviewPageInner() {
   const supabase = useMemo(() => createClient(), []);
+  const searchParams = useSearchParams();
+  const requestedLang = searchParams.get("lang")?.toLowerCase().trim() ?? "";
   const [dataFetched, setDataFetched] = useState(false);
   const [cards, setCards] = useState<Flashcard[]>([]);
   const [index, setIndex] = useState(0);
@@ -71,7 +74,9 @@ export default function PracticeReviewPage() {
 
     setKnownLanguageRows((knownRows ?? []) as KnownLanguage[]);
     const learningTyped = (learningRows ?? []) as LearningLanguage[];
-    const activeLanguage = learningTyped[0];
+    const activeLanguage =
+      learningTyped.find((l) => l.language_code.toLowerCase() === requestedLang) ??
+      learningTyped[0];
     if (activeLanguage?.language_code) {
       setTargetLanguageCode(activeLanguage.language_code);
     }
@@ -79,10 +84,7 @@ export default function PracticeReviewPage() {
     if (!learningCountError) setHasLearningLanguage((learningCount ?? 0) > 0);
 
     try {
-      const dueCards = await getDueCards(user.id, supabase, 20);
-      const rawData = dueCards;
-      console.log("RAW cards from DB:", rawData?.map((c) => c.word_id));
-      console.log("[PracticeReview] raw dueCards from getDueCards", dueCards);
+      const dueCards = await getDueCards(user.id, supabase, 20, activeLanguage?.language_code);
       const seen = new Set<string>();
       const unique = dueCards.filter((card) => {
         const wordText = card.words?.word;
@@ -96,7 +98,7 @@ export default function PracticeReviewPage() {
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, [supabase, requestedLang]);
 
   useEffect(() => {
     if (dataFetched) return;
@@ -105,13 +107,6 @@ export default function PracticeReviewPage() {
     // Intentional `[]`: run once per mount; `dataFetched` avoids duplicate fetch when Strict Mode remounts with state preserved.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadInitialData + supabase are stable for app lifetime
   }, []);
-
-  useEffect(() => {
-    console.log(
-      "FINAL cards in state:",
-      cards.map((c) => c.words?.word ?? (c as Flashcard & { word?: { word?: string } }).word?.word)
-    );
-  }, [cards]);
 
   const currentCard = useMemo(() => cards[index] ?? null, [cards, index]);
   const expectedEnglish = useMemo(
@@ -355,7 +350,13 @@ export default function PracticeReviewPage() {
   if (loading) {
     return (
       <>
-        <main className="bg-[var(--bg)] p-6 pb-28 text-sm text-[var(--text-secondary)]">Loading due cards...</main>
+        <main className="px-page mx-auto min-h-screen max-w-2xl bg-app pb-28">
+          <div className="animate-pulse" aria-hidden>
+            <div className="mt-4 h-12 card" />
+            <div className="mx-auto mt-20 h-12 w-48 card" />
+            <div className="mt-12 h-14 card" />
+          </div>
+        </main>
         <BottomNav activeTab="practice" />
       </>
     );
@@ -364,7 +365,20 @@ export default function PracticeReviewPage() {
   if (error) {
     return (
       <>
-        <main className="bg-[var(--bg)] p-6 pb-28 text-sm text-red-400">{error}</main>
+        <main className="px-page mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center bg-app pb-28 text-center">
+          <p className="text-base font-semibold text-ink">Something went wrong</p>
+          <p className="mt-2 max-w-xs text-sm text-ink-secondary">{error}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setError("");
+              void loadInitialData();
+            }}
+            className="btn-secondary mt-6"
+          >
+            Try again
+          </button>
+        </main>
         <BottomNav activeTab="practice" hasLearningLanguage={hasLearningLanguage} />
       </>
     );
@@ -373,14 +387,13 @@ export default function PracticeReviewPage() {
   if (!cards.length || !currentCard) {
     return (
       <>
-        <main className="grid min-h-screen place-items-center bg-[var(--bg)] p-6 pb-28 text-center">
+        <main className="grid min-h-screen place-items-center bg-app p-6 pb-28 text-center">
           <div>
-            <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">All caught up</h1>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Come back tomorrow for your next review</p>
-            <Link
-              href="/learn"
-              className="mt-6 inline-flex rounded-pill bg-[#BFFF00] px-6 py-3 text-sm font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
-            >
+            <h1 className="text-3xl font-semibold tracking-tight text-ink">All caught up</h1>
+            <p className="mt-2 text-sm text-ink-secondary">
+              Nothing due for review — your next batch will be ready tomorrow.
+            </p>
+            <Link href="/learn" className="btn-primary mt-6 px-6 py-3 text-sm">
               Back to home
             </Link>
           </div>
@@ -403,39 +416,46 @@ export default function PracticeReviewPage() {
     evalResult && (evalResult.result === "wrong" || evalResult.result === "close");
 
   return (
-    <main className="min-h-screen bg-[var(--bg)] pb-24 text-[var(--text-primary)]">
-      <div className="fixed inset-x-0 top-0 z-40 bg-[var(--bg)]">
-        <div className="mx-auto max-w-2xl border-b border-[var(--border)] px-4 py-3">
+    <main className="min-h-screen bg-app pb-24 text-ink">
+      <div className="fixed inset-x-0 top-0 z-40 bg-app">
+        <div className="px-page mx-auto max-w-2xl border-b border-line py-3">
           <div className="flex items-center justify-between">
             <Link
               href="/practice"
               aria-label="Exit review"
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-[var(--card-2)] text-[var(--text-secondary)] transition hover:opacity-90"
+              className="tap-target card-inset flex shrink-0 items-center justify-center text-ink-secondary transition-colors duration-150 hover:text-ink"
             >
               <IconX size={18} stroke={1.75} />
             </Link>
-            <p className="text-center text-[13px] font-bold text-[var(--text-secondary)]">
+            <p className="text-center text-[13px] font-bold text-ink-secondary">
               {`${progressCurrent} / ${cards.length}`}
             </p>
-            <span className="h-[36px] w-[36px] shrink-0" aria-hidden />
+            <span className="h-[44px] w-[44px] shrink-0" aria-hidden />
           </div>
-          <div className="mt-3 h-[3px] w-full overflow-hidden rounded-pill bg-[var(--card-2)]">
-            <div className="h-full rounded-pill bg-[#BFFF00] hover:bg-[#A8E000] transition-all" style={{ width: `${progressPct}%` }} />
+          <div className="progress-bar mt-3 h-[4px] w-full">
+            <div
+              className="progress-bar__fill"
+              style={{ width: `${progressPct}%` }}
+            />
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-lg px-4 pt-20 text-center">
-        <h2 className="text-5xl font-extrabold text-[var(--text-primary)]">{currentCard.words?.word ?? "Word"}</h2>
+      <div className="px-page mx-auto max-w-lg pt-24 text-center">
+        <h2 className="text-5xl font-semibold tracking-tight text-ink">{currentCard.words?.word ?? "Word"}</h2>
 
         {!evalResult ? (
           <>
             {hintLevel < 2 ? (
               <>
-                <p className="mt-8 text-left text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)]">
+                <label
+                  htmlFor="review-answer"
+                  className="label-caps mt-8 block text-left"
+                >
                   Type the English translation
-                </p>
+                </label>
                 <input
+                  id="review-answer"
                   type="text"
                   value={typedAnswer}
                   onChange={(event) => setTypedAnswer(event.target.value)}
@@ -445,64 +465,69 @@ export default function PracticeReviewPage() {
                       void submitCheck();
                     }
                   }}
-                  placeholder="Type the English translation"
-                  className="mt-2 w-full rounded-lg bg-[var(--card-2)] px-5 py-4 text-lg text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:outline-none"
+                  placeholder="Your answer"
+                  className="field-input mt-2"
                 />
                 {checkLoading ? (
-                  <p className="mt-1 text-left text-xs text-[var(--text-secondary)]">Checking...</p>
+                  <p className="mt-1 text-left text-xs text-ink-secondary">Checking…</p>
                 ) : null}
               </>
             ) : null}
             {hintLevel === 1 ? (
-              <p className="mt-1 text-left text-sm font-bold text-[#ffd166]">
+              <p className="mt-2 text-left text-sm font-semibold text-warning">
                 First letter: {Array.from(expectedEnglish)[0] ?? ""}
               </p>
             ) : null}
             {hintLevel === 2 ? (
-              <p className="mt-1 text-left text-sm font-bold text-[#ffd166]">Answer: {expectedEnglish}</p>
+              <p className="mt-2 text-left text-sm font-semibold text-warning">
+                Answer: {expectedEnglish}
+              </p>
             ) : null}
             {hintLevel < 2 ? (
               <div className="mt-2 text-left">
                 <button
                   type="button"
                   onClick={() => setHintLevel((level) => (level === 0 ? 1 : 2))}
-                  className="border-0 bg-transparent p-0 text-sm text-[var(--text-secondary)] underline"
+                  className="btn-quiet -ml-3 underline underline-offset-4"
                 >
                   {hintLevel === 0 ? "Show first letter" : "Reveal answer"}
                 </button>
               </div>
             ) : null}
             {hintLevel === 2 ? (
-              <div className="mt-4 rounded-[12px] bg-[var(--card-2)] px-4 py-[14px] text-left text-[14px] font-semibold text-[var(--text-primary)]">
-                <span className="text-[var(--accent)]" aria-hidden>
-                  💡{" "}
+              <div className="card-inset mt-4 flex items-start gap-2.5 px-4 py-[14px] text-left text-[14px] font-medium leading-relaxed text-ink">
+                <IconBulb size={18} stroke={1.75} className="mt-0.5 shrink-0 text-accent" aria-hidden />
+                <span>
+                  {postEvalUnderstand.status === "loading" ? (
+                    <span className="text-ink-secondary">Loading tip…</span>
+                  ) : postEvalUnderstand.status === "ok" ? (
+                    postEvalUnderstand.paragraph
+                  ) : postEvalUnderstand.status === "error" ? (
+                    <span className="text-ink-secondary">{postEvalUnderstand.message}</span>
+                  ) : null}
                 </span>
-                {postEvalUnderstand.status === "loading" ? (
-                  <span className="text-[var(--text-secondary)]">Loading tip…</span>
-                ) : postEvalUnderstand.status === "ok" ? (
-                  postEvalUnderstand.paragraph
-                ) : postEvalUnderstand.status === "error" ? (
-                  <span className="text-[var(--text-secondary)]">{postEvalUnderstand.message}</span>
-                ) : null}
               </div>
             ) : null}
           </>
         ) : (
           <div className="mt-8">
-            <div className="my-4 border-t border-[var(--border)]" />
-            <p className="text-[28px] font-extrabold text-[var(--accent)]">{expectedEnglish}</p>
-            <p className="mt-1 text-[13px] text-[var(--text-secondary)]">{answerSubtitleLine}</p>
+            <div className="my-4 border-t border-line" />
+            <p className="text-[28px] font-semibold tracking-tight text-accent">{expectedEnglish}</p>
+            <p className="mt-1 text-[13px] text-ink-secondary">{answerSubtitleLine}</p>
 
             {evalCorrect ? (
-              <div className="mt-4 rounded-[12px] bg-[var(--card-2)] px-4 py-[13px] text-center text-[15px] font-bold text-[var(--accent)]">
-                ✓ Correct
+              <div className="mt-4 flex items-center justify-center gap-2 rounded-md bg-success-soft px-4 py-[13px] text-[15px] font-bold text-success">
+                <IconCheck size={18} stroke={2.5} aria-hidden />
+                Correct
               </div>
             ) : null}
 
             {evalNeedsWarning ? (
-              <div className="mt-4 rounded-[12px] bg-[rgba(255,209,102,0.12)] px-4 py-[13px] text-center text-[15px] font-bold text-[#ffd166]">
-                <span>⚠ Not quite — you answered </span>
-                <span className="font-bold italic">&quot;{submittedAnswer}&quot;</span>
+              <div className="mt-4 flex items-center justify-center gap-2 rounded-md bg-warning-soft px-4 py-[13px] text-[15px] font-semibold text-warning">
+                <IconAlertTriangle size={18} stroke={2} aria-hidden />
+                <span>
+                  Not quite — you answered <span className="italic">&quot;{submittedAnswer}&quot;</span>
+                </span>
               </div>
             ) : null}
 
@@ -510,22 +535,22 @@ export default function PracticeReviewPage() {
             (postEvalUnderstand.status === "loading" ||
               postEvalUnderstand.status === "ok" ||
               postEvalUnderstand.status === "error") ? (
-              <div className="mt-4 rounded-[12px] bg-[var(--card-2)] px-4 py-[14px] text-left text-[14px] font-semibold text-[var(--text-primary)]">
-                <span className="text-[var(--accent)]" aria-hidden>
-                  💡{" "}
+              <div className="card-inset mt-4 flex items-start gap-2.5 px-4 py-[14px] text-left text-[14px] font-medium leading-relaxed text-ink">
+                <IconBulb size={18} stroke={1.75} className="mt-0.5 shrink-0 text-accent" aria-hidden />
+                <span>
+                  {postEvalUnderstand.status === "loading" ? (
+                    <span className="text-ink-secondary">Loading tip…</span>
+                  ) : postEvalUnderstand.status === "ok" ? (
+                    postEvalUnderstand.paragraph
+                  ) : (
+                    <span className="text-ink-secondary">{postEvalUnderstand.message}</span>
+                  )}
                 </span>
-                {postEvalUnderstand.status === "loading" ? (
-                  <span className="text-[var(--text-secondary)]">Loading tip…</span>
-                ) : postEvalUnderstand.status === "ok" ? (
-                  postEvalUnderstand.paragraph
-                ) : (
-                  <span className="text-[var(--text-secondary)]">{postEvalUnderstand.message}</span>
-                )}
               </div>
             ) : null}
 
             {evalResult.result === "equivalent" && evalResult.message.trim() && !evalNeedsWarning ? (
-              <div className="mt-3 rounded-[12px] bg-[var(--card-2)] px-4 py-[13px] text-center text-[14px] font-semibold text-[var(--text-primary)]">
+              <div className="card-inset mt-3 px-4 py-[13px] text-center text-[14px] font-medium text-ink">
                 {evalResult.message}
               </div>
             ) : null}
@@ -533,14 +558,14 @@ export default function PracticeReviewPage() {
         )}
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-4 py-4">
+      <div className="px-page fixed bottom-0 left-0 right-0 z-50 border-t border-line bg-app py-4">
         <div className="mx-auto max-w-2xl">
           {!evalResult ? (
             <button
               type="button"
               onClick={() => (hintLevel === 2 ? void handleContinueAfterReveal() : void submitCheck())}
               disabled={hintLevel === 2 ? srsLoading : checkLoading}
-              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+              className="btn-primary w-full disabled:opacity-30"
             >
               {hintLevel === 2 ? "Next" : "Check"}
             </button>
@@ -549,7 +574,7 @@ export default function PracticeReviewPage() {
               type="button"
               onClick={() => void handleContinue()}
               disabled={srsLoading}
-              className="w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-30"
+              className="btn-primary w-full disabled:opacity-30"
             >
               Next
             </button>
@@ -558,5 +583,23 @@ export default function PracticeReviewPage() {
       </div>
       {showComplete && <BottomNav activeTab="practice" hasLearningLanguage={hasLearningLanguage} />}
     </main>
+  );
+}
+
+export default function PracticeReviewPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="px-page mx-auto min-h-screen max-w-2xl bg-app pb-28">
+          <div className="animate-pulse" aria-hidden>
+            <div className="mt-4 h-12 card" />
+            <div className="mx-auto mt-20 h-12 w-48 card" />
+            <div className="mt-12 h-14 card" />
+          </div>
+        </main>
+      }
+    >
+      <PracticeReviewPageInner />
+    </Suspense>
   );
 }

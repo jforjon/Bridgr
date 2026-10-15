@@ -3,6 +3,8 @@ import type { LanguageOption, Proficiency } from "@/types";
 export const ONBOARDING_TOTAL_STEPS = 6;
 export const ONBOARDING_LANGUAGE_STORAGE_KEY = "onboarding_language_code";
 
+export type OnboardingStepFourSubScreen = "language" | "goal";
+
 export const KNOWN_LANGUAGES_RAW: LanguageOption[] = [
   { code: "ar", name: "Arabic", flag: "🇸🇦" },
   { code: "bn", name: "Bengali", flag: "🇧🇩" },

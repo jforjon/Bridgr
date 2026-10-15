@@ -43,7 +43,7 @@ export default function OnboardingStepOnePage() {
 
   return (
     <div className="relative">
-      <h1 className="font-sans text-3xl font-black tracking-tight text-[var(--text-primary)]">
+      <h1 className="font-sans text-3xl font-bold tracking-tight text-[var(--text-1)]">
         What should we call you?
       </h1>
       <div className="mt-6">
@@ -58,7 +58,7 @@ export default function OnboardingStepOnePage() {
             }
           }}
           placeholder="Your name"
-          className="h-12 w-full rounded-pill border-none bg-[var(--card-2)] px-4 text-[var(--text-primary)] outline-none placeholder:text-[var(--text-secondary)] focus:outline-none"
+          className="field-input"
           autoComplete="name"
         />
         {error ? <p className="mt-2 text-xs text-danger">{error}</p> : null}
@@ -71,7 +71,7 @@ export default function OnboardingStepOnePage() {
           void handleContinue();
         }}
         disabled={loading}
-        className="mt-8 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:cursor-not-allowed disabled:opacity-30"
+        className="btn-primary mt-8 w-full"
       >
         {loading ? 'Saving...' : 'Continue'}
       </button>

@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const inputClass =
-  "w-full rounded-pill border-none bg-[var(--card-2)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
+  "field-input";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -68,16 +68,16 @@ export default function LoginScreen() {
 
   return (
     <main className="flex min-h-screen items-start justify-center bg-[var(--bg)]">
-      <div className="w-full max-w-[375px] rounded-xl bg-[var(--card)]">
-        <div className="px-6 pb-8 pt-12 text-center">
-          <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></h1>
-          <h2 className="mt-8 font-sans text-2xl font-extrabold text-[var(--text-primary)]">Welcome back</h2>
-          <p className="mt-2 text-sm text-[var(--text-secondary)]">Continue your language journey</p>
+      <div className="w-full max-w-[375px] rounded-xl bg-[var(--surface-1)]">
+        <div className="px-page pb-8 pt-12 text-center">
+          <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-1)]">Bridg<span className="text-[var(--accent-text)]">r</span></span></h1>
+          <h2 className="mt-8 font-sans text-2xl font-semibold text-[var(--text-1)]">Welcome back</h2>
+          <p className="mt-2 text-sm text-[var(--text-2)]">Continue your language journey</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-8 px-6">
+        <form onSubmit={handleSubmit} className="px-page mt-8">
           <div>
-            <label htmlFor="email" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
+            <label htmlFor="email" className="field-label mb-2 block">
               Email
             </label>
             <input
@@ -92,7 +92,7 @@ export default function LoginScreen() {
           </div>
 
           <div className="mt-4">
-            <label htmlFor="password" className="mb-2 block text-sm font-bold text-[var(--text-primary)]">
+            <label htmlFor="password" className="field-label mb-2 block">
               Password
             </label>
             <div className="relative">
@@ -108,7 +108,7 @@ export default function LoginScreen() {
               <button
                 type="button"
                 aria-label={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-secondary)] hover:text-[var(--accent)] focus-visible:outline-none"
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-0.5 text-[var(--text-2)] hover:text-[var(--accent-text)] focus-visible:outline-none"
                 onClick={() => setShowPassword(!showPassword)}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -117,7 +117,7 @@ export default function LoginScreen() {
           </div>
 
           <div className="mt-2 text-right">
-            <Link href="/forgot-password" className="text-sm text-[var(--accent)] hover:underline">
+            <Link href="/forgot-password" className="text-sm text-[var(--accent-text)] hover:underline">
               Forgot your password?
             </Link>
           </div>
@@ -125,25 +125,25 @@ export default function LoginScreen() {
           <button
             type="submit"
             disabled={loading}
-            className="mt-6 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] transition-opacity hover:bg-[#A8E000] disabled:opacity-30"
+            className="btn-primary mt-6 w-full"
           >
             {loading ? "Logging in..." : "Log in"}
           </button>
 
-          {error ? <p className="mt-3 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mt-3 text-sm text-danger">{error}</p> : null}
         </form>
 
-        <div className="mt-6 px-6">
+        <div className="px-page mt-6">
           <div className="relative flex items-center">
             <div className="flex-grow border-t border-[var(--border)]" />
-            <span className="bg-[var(--card)] px-4 text-sm text-[var(--text-secondary)]">or</span>
+            <span className="bg-[var(--surface-1)] px-4 text-sm text-[var(--text-2)]">or</span>
             <div className="flex-grow border-t border-[var(--border)]" />
           </div>
         </div>
 
-        <div className="mt-6 px-6 pb-12 text-center">
-          <p className="text-sm text-[var(--text-secondary)]">Don&apos;t have an account?</p>
-          <Link href="/signup" className="mt-1 inline-block text-sm font-extrabold text-[var(--accent)] hover:underline">
+        <div className="px-page mt-6 pb-12 text-center">
+          <p className="text-sm text-[var(--text-2)]">Don&apos;t have an account?</p>
+          <Link href="/signup" className="mt-1 inline-block text-sm font-semibold text-[var(--accent-text)] hover:underline">
             Create a free account
           </Link>
         </div>

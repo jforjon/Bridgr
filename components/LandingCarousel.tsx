@@ -47,7 +47,7 @@ export default function LandingCarousel() {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex flex-row overflow-x-auto snap-x snap-mandatory rounded-2xl bg-[var(--card)] scrollbar-none [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="flex flex-row overflow-x-auto snap-x snap-mandatory rounded-2xl bg-[var(--surface-1)] scrollbar-none [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {slides.map((slide) => (
           <article
@@ -55,12 +55,12 @@ export default function LandingCarousel() {
             className="flex min-w-full shrink-0 snap-start flex-col items-center justify-center px-6 py-8 text-center"
           >
             <span role="img" aria-label={slide.iconLabel} className="flex justify-center leading-none">
-              <slide.Icon size={48} className="text-[var(--accent)]" stroke={1.5} aria-hidden />
+              <slide.Icon size={48} className="text-[var(--accent-text)]" stroke={1.5} aria-hidden />
             </span>
-            <h3 className="mt-5 text-xl font-extrabold tracking-tighter text-[var(--text-primary)]">
+            <h3 className="mt-5 text-xl font-semibold tracking-tighter text-[var(--text-1)]">
               {slide.title}
             </h3>
-            <p className="mt-3 max-w-xs text-sm leading-6 text-[var(--text-secondary)]">{slide.body}</p>
+            <p className="mt-3 max-w-xs text-sm leading-6 text-[var(--text-2)]">{slide.body}</p>
           </article>
         ))}
       </div>
@@ -70,7 +70,7 @@ export default function LandingCarousel() {
           <span
             key={slide.title}
             className={`h-2.5 w-2.5 rounded-pill ${
-              activeIndex === index ? "bg-[#BFFF00]" : "bg-[var(--card-2)]"
+              activeIndex === index ? "bg-accent-fill" : "bg-[var(--surface-2)]"
             }`}
             aria-hidden="true"
           />

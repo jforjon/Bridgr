@@ -165,7 +165,7 @@ export async function POST(request: Request) {
         "content-type": "application/json"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-6",
+        model: "claude-sonnet-4-5-20250929",
         max_tokens: MAX_OUTPUT_TOKENS,
         system: SYSTEM_PROMPT,
         messages: [{ role: "user", content: userContent }]

@@ -30,17 +30,17 @@ export default function BridgrPageLoading({
 
   return (
     <main className={`flex min-h-screen flex-col bg-[var(--bg)] pb-24 ${className}`}>
-      <p className="px-6 pt-8 text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></p>
-      <div className="flex flex-1 flex-col items-center px-6">
+      <p className="px-page pt-8 text-2xl"><span className="font-black tracking-tight text-[var(--text-1)]">Bridg<span className="text-[var(--accent-text)]">r</span></span></p>
+      <div className="px-page flex flex-1 flex-col items-center">
         <div
-          className="mx-auto mt-32 h-16 w-16 shrink-0 animate-pulse rounded-full bg-[var(--card-2)]"
+          className="mx-auto mt-32 h-16 w-16 shrink-0 animate-pulse rounded-full bg-[var(--surface-2)]"
           aria-hidden
         />
-        <p className="mt-8 text-center font-sans text-xl font-extrabold tracking-tighter text-[var(--text-primary)]">
+        <p className="mt-8 text-center font-sans text-xl font-semibold tracking-tighter text-[var(--text-1)]">
           {title}
         </p>
         {resolvedSubtitle !== null && resolvedSubtitle !== "" ? (
-          <p className="mt-2 text-center text-sm font-medium text-[var(--text-secondary)]">
+          <p className="mt-2 text-center text-sm font-medium text-[var(--text-2)]">
             {resolvedSubtitle}
           </p>
         ) : null}

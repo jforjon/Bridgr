@@ -19,8 +19,8 @@ export function ProficiencyPicker({ value, onChange }: ProficiencyPickerProps) {
             onClick={() => onChange(option)}
             className={`min-w-[2.25rem] rounded-pill border px-3 py-1.5 text-xs font-semibold transition ${
               selected
-                ? "border-[var(--accent)] bg-[#BFFF00] font-extrabold text-[#2A3800]"
-                : "border-[var(--border)] bg-[var(--card-2)] text-[var(--text-secondary)] hover:bg-[var(--card)]"
+                ? "border-[var(--accent-text)] bg-accent-fill font-semibold text-accent-ink"
+                : "border-[var(--border)] bg-[var(--surface-2)] text-[var(--text-2)] hover:bg-[var(--surface-1)]"
             }`}
           >
             {option}

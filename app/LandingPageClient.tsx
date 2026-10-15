@@ -45,15 +45,15 @@ export default function LandingPageClient() {
 
   return (
     <main className="min-h-screen bg-[var(--bg)]">
-      <div className="px-6 pt-8">
-        <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-primary)]">Bridg<span className="text-[var(--accent)]">r</span></span></h1>
+      <div className="px-page pt-8">
+        <h1 className="text-2xl"><span className="font-black tracking-tight text-[var(--text-1)]">Bridg<span className="text-[var(--accent-text)]">r</span></span></h1>
       </div>
 
-      <section className="mt-12 px-6">
-        <h2 className="font-sans text-4xl font-extrabold leading-tight text-[var(--text-primary)]">
+      <section className="px-page mt-12">
+        <h2 className="font-sans text-4xl font-semibold leading-tight text-[var(--text-1)]">
           Learn faster using the languages you already speak
         </h2>
-        <p className="mt-4 text-base text-[var(--text-secondary)]">The only app that builds on what you already know</p>
+        <p className="mt-4 text-base text-[var(--text-2)]">The only app that builds on what you already know</p>
       </section>
 
       <section className="mt-10">
@@ -63,13 +63,13 @@ export default function LandingPageClient() {
           className="flex overflow-x-auto snap-x snap-mandatory [scroll-snap-type:x_mandatory] scrollbar-none [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
           {slides.map((slide) => (
-            <div key={slide.title} className="min-w-full snap-start px-6 py-2">
-              <div className="rounded-xl bg-[var(--card)] p-8 text-center">
+            <div key={slide.title} className="px-page min-w-full snap-start py-2">
+              <div className="rounded-xl bg-[var(--surface-1)] p-8 text-center">
                 <div className="mb-4 flex justify-center" role="img" aria-label={slide.iconLabel}>
-                  <slide.Icon size={48} className="text-[var(--accent)]" stroke={1.5} aria-hidden />
+                  <slide.Icon size={48} className="text-[var(--accent-text)]" stroke={1.5} aria-hidden />
                 </div>
-                <h3 className="font-sans text-2xl font-extrabold text-[var(--text-primary)]">{slide.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-[var(--text-secondary)]">{slide.body}</p>
+                <h3 className="font-sans text-2xl font-semibold text-[var(--text-1)]">{slide.title}</h3>
+                <p className="mt-3 text-sm leading-relaxed text-[var(--text-2)]">{slide.body}</p>
               </div>
             </div>
           ))}
@@ -81,8 +81,8 @@ export default function LandingPageClient() {
               key={slide.title}
               className={
                 activeSlide === index
-                  ? "h-3 w-3 rounded-pill bg-[#BFFF00] hover:bg-[#A8E000]"
-                  : "h-2 w-2 rounded-full bg-[var(--card-2)]"
+                  ? "h-3 w-3 rounded-pill bg-accent-fill hover:bg-accent-pressed"
+                  : "h-2 w-2 rounded-full bg-[var(--surface-2)]"
               }
               aria-hidden="true"
             />
@@ -90,16 +90,16 @@ export default function LandingPageClient() {
         </div>
       </section>
 
-      <section className="mt-10 px-6 pb-12">
+      <section className="px-page mt-10 pb-12">
         <Link
           href="/signup"
-          className="block w-full rounded-pill bg-[#BFFF00] py-4 text-center text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000]"
+          className="btn-primary w-full"
         >
           Start for free
         </Link>
         <Link
           href="/login"
-          className="mt-3 block w-full rounded-pill bg-[var(--card-2)] py-4 text-center text-base font-bold text-[var(--text-primary)]"
+          className="mt-3 block w-full rounded-pill bg-[var(--surface-2)] py-4 text-center text-base font-bold text-[var(--text-1)]"
         >
           I already have an account
         </Link>

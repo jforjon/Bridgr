@@ -10,7 +10,7 @@ import {
 
 export const runtime = "nodejs";
 
-const JUDGE_MODEL_GRAMMAR = "claude-haiku-4-5";
+const JUDGE_MODEL_GRAMMAR = "claude-haiku-4-5-20251001";
 const JUDGE_MAX_TOKENS_GRAMMAR = 200;
 const JUDGE_MODEL_WRITING = "claude-haiku-4-5-20251001";
 const JUDGE_MAX_TOKENS_WRITING = 300;
@@ -103,15 +103,24 @@ function isCefrLevel(value: unknown): value is CEFRLevel {
   return typeof value === "string" && (CEFR_LEVELS as readonly string[]).includes(value);
 }
 
+function resolveAppOrigin(request: Request): string | null {
+  const fromEnv = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
+  if (fromEnv) return fromEnv;
+  try {
+    return new URL(request.url).origin;
+  } catch {
+    return null;
+  }
+}
+
 async function triggerCourseGeneration(request: Request, language_code: string): Promise<void> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!baseUrl) {
-    console.error("course generation skipped: NEXT_PUBLIC_APP_URL is not set");
+  const origin = resolveAppOrigin(request);
+  if (!origin) {
+    console.error("course generation skipped: could not resolve app origin");
     return;
   }
-  const origin = baseUrl.replace(/\/$/, "");
   try {
-    const courseRes = await fetch(`${origin}/api/course/generate`, {
+    const courseRes = await fetch(`${origin}/api/course/skeleton`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

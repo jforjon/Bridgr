@@ -7,10 +7,10 @@ import { createClient } from "@/lib/supabase/client";
 import { SEARCHABLE_LANGUAGES, getLanguageVisual } from "../shared";
 
 const inputClass =
-  "h-12 w-full rounded-pill border-none bg-[var(--card-2)] px-4 text-[var(--text-primary)] placeholder:text-[var(--text-secondary)] outline-none focus:outline-none";
+  "field-input";
 
 const bottomBar =
-  "fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] px-6 py-4";
+  "px-page fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border)] bg-[var(--bg)] py-4";
 
 export default function OnboardingStepTwoPage() {
   const router = useRouter();
@@ -60,6 +60,26 @@ export default function OnboardingStepTwoPage() {
         throw updateError;
       }
 
+      // The native language is also a known language (the primary bridge source
+      // for cross-linguistic hints) and, crucially, the app treats "has ≥1
+      // known_languages row" as onboarding-complete. Persisting it here means a
+      // learner who skips step 3 ("other languages") still lands on /learn
+      // instead of being bounced back into onboarding.
+      const { error: knownError } = await supabase.from("known_languages").upsert(
+        {
+          user_id: user.id,
+          language_code: selectedLanguage.code,
+          language_name: selectedLanguage.name,
+          proficiency: "C2",
+          is_reference_only: false
+        },
+        { onConflict: "user_id,language_code" }
+      );
+
+      if (knownError) {
+        throw knownError;
+      }
+
       router.push("/onboarding/3");
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : String(submitError));
@@ -70,7 +90,7 @@ export default function OnboardingStepTwoPage() {
 
   return (
     <>
-      <h1 className="font-sans text-3xl font-extrabold text-[var(--text-primary)]">What is your native language?</h1>
+      <h1 className="font-sans text-3xl font-semibold text-[var(--text-1)]">What is your native language?</h1>
 
       <div className="mt-6">
         <input
@@ -91,14 +111,14 @@ export default function OnboardingStepTwoPage() {
               type="button"
               onClick={() => setSelectedCode(language.code)}
               className={`flex w-full items-center rounded-xl border px-4 py-4 text-left ${
-                selected ? "border-[var(--accent)] bg-[var(--card-2)]" : "border-[var(--border)] bg-[var(--card)]"
+                selected ? "border-[var(--accent-text)] bg-[var(--surface-2)]" : "border-[var(--border)] bg-[var(--surface-1)]"
               }`}
             >
               <span className="text-2xl">{getLanguageVisual(language)}</span>
-              <span className="ml-3 text-base font-bold text-[var(--text-primary)]">{language.name}</span>
+              <span className="ml-3 text-base font-bold text-[var(--text-1)]">{language.name}</span>
               <span
                 className={`ml-auto h-5 w-5 rounded-full border-2 ${
-                  selected ? "border-[var(--accent)] bg-[#BFFF00]" : "border-[var(--border)] bg-[var(--card-2)]"
+                  selected ? "border-[var(--accent-text)] bg-accent-fill" : "border-[var(--border)] bg-[var(--surface-2)]"
                 }`}
               />
             </button>
@@ -108,12 +128,12 @@ export default function OnboardingStepTwoPage() {
 
       <div className={bottomBar}>
         <div className="mx-auto w-full max-w-[480px]">
-          {error ? <p className="mb-2 text-sm text-red-400">{error}</p> : null}
+          {error ? <p className="mb-2 text-sm text-danger">{error}</p> : null}
           <Button
             type="button"
             onClick={() => void handleContinue()}
             disabled={!selectedCode || saving}
-            className="h-auto min-h-0 w-full rounded-pill bg-[#BFFF00] py-4 text-base font-extrabold text-[#2A3800] hover:bg-[#A8E000] disabled:opacity-50"
+            fullWidth
           >
             {saving ? "Saving..." : "Continue"}
           </Button>

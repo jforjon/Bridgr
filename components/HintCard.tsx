@@ -34,7 +34,7 @@ export function LanguageHintCard({
       {/* Backdrop */}
       <div
         className={cn(
-          "fixed inset-0 bg-foreground/40 transition-opacity duration-300 z-40",
+          "scrim fixed inset-0 z-40 transition-opacity duration-300",
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
         )}
         onClick={onClose}
@@ -51,60 +51,39 @@ export function LanguageHintCard({
           isOpen ? "translate-y-0" : "translate-y-full"
         )}
       >
-        <div className="bg-background shadow-xl">
+        <div className="sheet">
           {/* Drag handle indicator */}
           <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 bg-muted-foreground/30 rounded-full" />
+            <div className="sheet-grabber" />
           </div>
 
           <div className="px-6 pb-8 pt-4">
             {/* Header with bookmark */}
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
-                <h2
-                  id="hint-word"
-                  className="text-3xl font-bold text-foreground tracking-tight"
-                >
+                {/* The word being learned — display face, as the system reserves
+                    Bricolage for the language itself. */}
+                <h2 id="hint-word" className="type-display text-title-2 text-ink">
                   {word}
                 </h2>
-                <p className="text-muted-foreground text-lg mt-1">
-                  {translation}
-                </p>
+                <p className="body-lg mt-1 text-ink-secondary">{translation}</p>
               </div>
 
               <button
                 onClick={handleSave}
-                className="p-2 -mr-2 -mt-1 transition-colors hover:bg-muted rounded-lg"
+                className={cn("btn-quiet", isSaved && "text-accent")}
                 aria-label={isSaved ? "Remove bookmark" : "Save connection"}
               >
-                <span
-                  className={cn(
-                    "text-xs font-semibold transition-colors",
-                    isSaved ? "text-amber-600" : "text-muted-foreground"
-                  )}
-                >
-                  {isSaved ? "Saved" : "Save"}
-                </span>
+                {isSaved ? "Saved" : "Save"}
               </button>
             </div>
 
-            {/* Hint block with amber background */}
-            <div className="bg-amber-50 border border-amber-200/60 p-4 mb-6">
-              <div className="flex gap-3">
-                <div className="flex-shrink-0 mt-0.5">
-                  <Lightbulb className="size-5 text-amber-600" />
-                </div>
-                <p className="text-amber-900 text-sm leading-relaxed">
-                  {hint}
-                </p>
-              </div>
+            <div className="alert alert--warning mb-6">
+              <Lightbulb className="size-5 shrink-0 text-warning" />
+              <p className="alert__body">{hint}</p>
             </div>
 
-            {/* Got it button */}
-            <Button
-              onClick={onClose}
-              className="w-full h-12 text-base font-medium"
-            >
+            <Button onClick={onClose} fullWidth>
               Got it
             </Button>
           </div>
